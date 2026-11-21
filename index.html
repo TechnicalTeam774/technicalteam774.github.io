@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TechnicalTeam774</title>
+<meta name="description" content="تطبيقات TechnicalTeam774">
+<meta name="theme-color" content="#0F1113">
+<style>
+  :root{
+    --bg:#0F1113; --card:#171A1D; --line:#262B30;
+    --text:#ECEFF2; --muted:#9BA4AD; --accent:#E8B931;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:"Segoe UI",system-ui,-apple-system,"Noto Naskh Arabic",Tahoma,sans-serif;
+    min-height:100vh; display:flex; align-items:center; justify-content:center;
+    padding:40px 16px;
+  }
+  .wrap{width:100%; max-width:520px}
+  h1{font-size:24px; margin:0 0 6px; letter-spacing:.2px}
+  .sub{color:var(--muted); font-size:14px; margin:0 0 28px}
+  .apps{display:grid; gap:12px}
+  a.app{
+    display:flex; align-items:center; gap:14px; text-decoration:none; color:inherit;
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:16px 18px; transition:border-color .15s ease, transform .15s ease;
+  }
+  a.app:hover{border-color:var(--accent); transform:translateY(-1px)}
+  .ico{font-size:26px; line-height:1}
+  .meta{flex:1; min-width:0}
+  .name{font-size:16px; font-weight:600}
+  .desc{font-size:13px; color:var(--muted); margin-top:2px}
+  .chev{color:var(--muted); font-size:18px}
+  footer{margin-top:28px; color:var(--muted); font-size:12px; text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>TechnicalTeam774</h1>
+  <p class="sub">تطبيقات ويب تشتغل من المتصفح ومن الموبايل.</p>
+
+  <div class="apps">
+    <a class="app" href="/finance-dashboard/">
+      <span class="ico">⚖️</span>
+      <span class="meta">
+        <span class="name">ميزان</span>
+        <span class="desc">إدارة مالية — مصروفات، دخل، ديون وجمعيات</span>
+      </span>
+      <span class="chev">‹</span>
+    </a>
+    <a class="app" href="/miaad/">
+      <span class="ico">🗓️</span>
+      <span class="meta">
+        <span class="name">ميعاد</span>
+        <span class="desc">تنظيم ومتابعة المهام اليومية</span>
+      </span>
+      <span class="chev">‹</span>
+    </a>
+    <a class="app" href="/lamma/">
+      <span class="ico">🎲</span>
+      <span class="meta">
+        <span class="name">لمّة</span>
+        <span class="desc">طاولة ودومنة ولودو مع الأصحاب</span>
+      </span>
+      <span class="chev">‹</span>
+    </a>
+  </div>
+
+  <footer>Digital Asset Links للتطبيقات على <code>/.well-known/assetlinks.json</code></footer>
+</div>
+</body>
+</html>

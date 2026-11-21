@@ -1,0 +1,10 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "io.github.technicalteam774.mizan",
+      "sha256_cert_fingerprints": ["73:0D:FD:E3:AF:CB:47:C9:F4:3E:96:D3:C9:11:15:01:B0:D0:78:89:C9:A0:0F:DE:76:EC:22:7C:D1:79:91:0C"]
+    }
+  }
+]
