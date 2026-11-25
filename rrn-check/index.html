@@ -293,10 +293,11 @@ async function read(f){const b=await f.arrayBuffer();const wb=XLSX.read(b,{type:
  const ws=wb.Sheets[wb.SheetNames[0]];
  const hdr=(XLSX.utils.sheet_to_json(ws,{header:1,defval:''})[0]||[]).map(x=>String(x).trim()).filter(Boolean);
  return {hdr,rows:XLSX.utils.sheet_to_json(ws,{defval:''})};}
-function idb(mode,store,fn){return new Promise((res,rej)=>{const r=indexedDB.open('rrncheck',2);
+function idb(mode,store,fn){return new Promise((res,rej)=>{const r=indexedDB.open('rrncheck',3);
  r.onupgradeneeded=e=>{const d=e.target.result;
   if(!d.objectStoreNames.contains('s'))d.createObjectStore('s');
-  if(!d.objectStoreNames.contains('raw'))d.createObjectStore('raw');};
+  if(!d.objectStoreNames.contains('raw'))d.createObjectStore('raw');
+  if(!d.objectStoreNames.contains('ix'))d.createObjectStore('ix');};
  r.onsuccess=e=>{let t;try{t=e.target.result.transaction(store,mode);}catch(err){rej(err);return;}
   const o=t.objectStore(store),q=fn(o);
   t.oncomplete=()=>res(q&&q.result);t.onerror=()=>rej(t.error);t.onabort=()=>rej(t.error);};
@@ -305,6 +306,19 @@ const rk=(c,n)=>c+'|'+n;
 const putRaw=(c,n,rows)=>idb('readwrite','raw',o=>o.put(rows,rk(c,n)));
 const getRaw=(c,n)=>idb('readonly','raw',o=>o.get(rk(c,n)));
 const dropRaw=(c,n)=>idb('readwrite','raw',o=>o.delete(rk(c,n)));
+const putIx=(c,n,ix)=>idb('readwrite','ix',o=>o.put(ix,rk(c,n)));
+const getIx=(c,n)=>idb('readonly','ix',o=>o.get(rk(c,n)));
+const dropIx=(c,n)=>idb('readwrite','ix',o=>o.delete(rk(c,n)));
+/* Everything the file list, KPIs, month view and the solid-date rule need,
+   small enough to keep in memory for every file at once. */
+function fmeta(ix,hdr,nRaw,noRaw){
+ const dates={};let val=0,rrnN=0,fmin='',fmax='';
+ for(let i=0;i<ix.length;i++){const r=ix[i];
+  if(r[11])rrnN++;
+  val+=r[3];
+  const d=r[8];
+  if(d){dates[d]=(dates[d]||0)+1;if(!fmin||d<fmin)fmin=d;if(!fmax||d>fmax)fmax=d;}}
+ return {hdr:hdr||[],n:nRaw,cnt:ix.length,val:val,rrnN:rrnN,from:fmin,to:fmax,dates:dates,noRaw:!!noRaw};}
 const save=()=>idb('readwrite','s',o=>o.put(DB,'db'))
  .catch(e=>{console.error('save failed',e);alert('Could not save to this browser.\n\n'+why(e));});
 /* v1 kept every raw row in the same record as the file list, which is what made
@@ -316,12 +330,19 @@ async function load(){
  for(const c of ['pos','ecom']){
   for(const n in v[c].files){
    const F=v[c].files[n];if(!F)continue;
-   if(F.rows){
-    try{await putRaw(c,n,F.rows);}catch(e){console.error('migrate',n,e);}
-    v[c].files[n]={hdr:F.hdr||[],n:F.rows.length,ix:compact(F.rows)};
+   if(F.rows){                       /* v1: raw rows sat in the same record */
+    const ix=compact(F.rows);
+    try{await putRaw(c,n,F.rows);}catch(e){console.error('migrate raw',n,e);}
+    try{await putIx(c,n,ix);}catch(e){console.error('migrate ix',n,e);}
+    v[c].files[n]=fmeta(ix,F.hdr,F.rows.length);
     F.rows=null;moved++;
     await new Promise(r=>setTimeout(r,0));}
-   else if(!F.ix){v[c].files[n]={hdr:F.hdr||[],n:F.n||0,ix:[]};}}}
+   else if(F.ix){                    /* v2: index sat in the same record */
+    try{await putIx(c,n,F.ix);}catch(e){console.error('migrate ix',n,e);}
+    v[c].files[n]=fmeta(F.ix,F.hdr,F.n||F.ix.length);
+    moved++;
+    await new Promise(r=>setTimeout(r,0));}
+   else if(F.cnt==null){v[c].files[n]=fmeta([],F.hdr,F.n||0);}}}
  DB=v;
  if(moved){try{await idb('readwrite','s',o=>o.put(DB,'db'));}catch(e){console.error(e);}}}
 
@@ -338,19 +359,16 @@ function compact(rows){
    kU?dig(r[kU]).padStart(6,'0'):'',kB?norm(r[kB]):'',kT?norm(r[kT]):'',
    kN?clean(r[kN]):'',kD?isoC(r[kD]):'',kNet?(amt(r[kNet])||0):0,kBD?isoC(r[kBD]):'',kR?dig(r[kR]):'']);}
  return out;}
+/* No rows here any more — totals come from each file's stored summary,
+   so this stays instant whether 10 files are loaded or 400. */
 function index(c){
- const out={rows:[],dates:{},count:0,value:0,rrn:0,meta:{}};
+ const out={dates:{},count:0,value:0,rrn:0,meta:{}};
  for(const fn in DB[c].files){
-  const F=DB[c].files[fn]||{},ix=F.ix||[];
-  if(!ix.length){out.meta[fn]={n:F.n||0,from:'',to:''};continue;}
-  let fmin='',fmax='';
-  for(let i=0;i<ix.length;i++){const r=ix[i];
-   if(r[11])out.rrn++;
-   out.rows.push(r);
-   const d=r[8];
-   if(d){out.dates[d]=(out.dates[d]||0)+1; if(!fmin||d<fmin)fmin=d; if(!fmax||d>fmax)fmax=d;}
-   out.count++; out.value+=r[3];}
-  out.meta[fn]={n:F.n||ix.length,from:fmin,to:fmax};}
+  const F=DB[c].files[fn]||{};
+  out.count+=F.cnt||0; out.value+=F.val||0; out.rrn+=F.rrnN||0;
+  const dd=F.dates||{};
+  for(const d in dd)out.dates[d]=(out.dates[d]||0)+dd[d];
+  out.meta[fn]={n:F.n||0,from:F.from||'',to:F.to||''};}
  IX[c]=out; return out;}
 function memNote(){
  try{
@@ -427,6 +445,7 @@ function paintB(){
 async function delFile(name){
  if(!DB[ch].files[name]||!confirm('Remove "'+name+'"?'))return;
  delete DB[ch].files[name]; try{await dropRaw(ch,name);}catch(e){console.error(e);}
+ try{await dropIx(ch,name);}catch(e){console.error(e);}
  index(ch); paintA(); if(FL[ch])run(); save();}
 async function addMS(files,onlyTool){
  let list=Array.from(files).filter(f=>/\.(xlsx|xls|csv)$/i.test(f.name));
@@ -436,14 +455,17 @@ async function addMS(files,onlyTool){
   list=t;}
  if(!list.length){alert('No spreadsheet files were found. Drop the folders themselves, or pick the files directly.');return;}
  const bar=$('bar'),lbl=$('subA'),orig=lbl.textContent;bar.style.display='block';
- let i=0,added=0,skipped=0;const failed=[];
+ let i=0,added=0,skipped=0,noRawN=0;const failed=[];
  for(const file of list){
   lbl.textContent='Reading '+file.name+'  \u00b7  '+(i+1)+' of '+list.length;
   if(DB[ch].files[file.name]){skipped++;}
   else{try{const {hdr,rows}=await read(file);
     const ix=compact(rows);
-    await putRaw(ch,file.name,rows);
-    DB[ch].files[file.name]={hdr,n:rows.length,ix};
+    let noRaw=false;
+    try{await putRaw(ch,file.name,rows);}
+    catch(e){console.warn('raw not kept for',file.name,e);noRaw=true;noRawN++;}
+    await putIx(ch,file.name,ix);
+    DB[ch].files[file.name]=fmeta(ix,hdr,rows.length,noRaw);
     added++;}catch(e){console.error(file.name,e);failed.push(file.name+' — '+why(e));}}
   i++;bar.firstElementChild.style.width=(i/list.length*100)+'%';
   await new Promise(r=>requestAnimationFrame(()=>setTimeout(r,0)));}
@@ -453,6 +475,7 @@ async function addMS(files,onlyTool){
  const total=Object.keys(DB[ch].files).length;
  $('addmsg').textContent=added?('Added '+added+' file'+(added>1?'s':'')+(skipped?', '+skipped+' already loaded':'')+'. '+total+' in total.')
    :(skipped?'Those '+skipped+' file'+(skipped>1?'s were':' was')+' already loaded. '+total+' in total.':'');
+ if(noRawN)$('addmsg').textContent+=' '+noRawN+' of them are matched but cannot be re-downloaded from here \u2014 browser storage is full.';
  if(failed.length)alert(failed.length+' file'+(failed.length>1?'s':'')+' could not be read:\n\n'+failed.slice(0,8).join('\n')+(failed.length>8?'\n\u2026and '+(failed.length-8)+' more.':''));
  lbl.textContent='Saving to this browser \u2026';
  save().then(()=>{lbl.textContent=orig;});
@@ -516,15 +539,36 @@ function drawFix(){
   '<td class="r num">'+(r.ca==null?'':money(r.ca))+'</td><td class="num">'+pretty(r.cdate)+'</td></tr>').join('')
   :'<tr><td colspan="11"><div class="empty">Nothing matches that filter.</div></td></tr>';
  $('ffoot').textContent=show.length>400?'Showing the first 400 of '+plain(show.length)+'. Download the file for the full list.':'';}
-function run(){
+async function run(){
  const F=FL[ch];if(!F)return;
  const X=IX[ch]||index(ch);
- if(!X.rows.length){alert('Load the '+CH[ch].name+' merchant statements first.');return;}
+ if(!X.count){alert('Load the '+CH[ch].name+' merchant statements first.');return;}
+ /* Only the keys this flags file could possibly match are worth holding on to.
+    A flags file is a couple of thousand rows, so these stay small no matter
+    how many statements are loaded. */
+ const wantR=new Set(),wantM=new Set(),wantN=new Set();
+ for(const f of F.parsed){
+  const key=f6(f.card)+'|'+l4(f.card)+'|'+f.a;
+  if(f.rrn)wantR.add(f.rrn);
+  wantM.add(f.mid+'|'+key);
+  wantN.add(clean(f.store)+'|'+key);}
  const byRRN=new Map(),byMid=new Map(),byName=new Map();
- for(const r of X.rows){
-   if(r[11])byRRN.set(r[11],r);
-   byMid.set(r[0]+'|'+r[1]+'|'+r[2]+'|'+r[3],r);
-   if(r[7])byName.set(r[7]+'|'+r[1]+'|'+r[2]+'|'+r[3],r);}
+ const names=Object.keys(DB[ch].files),lbl=$('ctB');
+ const bar=$('bar');if(bar){bar.style.display='block';bar.firstElementChild.style.width='0';}
+ for(let i=0;i<names.length;i++){
+  if(names.length>8)lbl.textContent='Checking statement '+(i+1)+' of '+names.length+' \u2026';
+  let ix=[];try{ix=(await getIx(ch,names[i]))||[];}catch(e){console.error('index read',names[i],e);}
+  for(let j=0;j<ix.length;j++){const r=ix[j];
+   if(r[11]&&wantR.has(r[11]))byRRN.set(r[11],r);
+   const km=r[0]+'|'+r[1]+'|'+r[2]+'|'+r[3];
+   if(wantM.has(km))byMid.set(km,r);
+   if(r[7]){const kn=r[7]+'|'+r[1]+'|'+r[2]+'|'+r[3];
+    if(wantN.has(kn))byName.set(kn,r);}}
+  ix=null;
+  if(bar)bar.firstElementChild.style.width=((i+1)/names.length*100)+'%';
+  await new Promise(r=>requestAnimationFrame(()=>setTimeout(r,0)));}
+ lbl.textContent=CH[ch].name;
+ if(bar){setTimeout(()=>{bar.style.display='none';bar.firstElementChild.style.width='0';},300);}
  const solid=new Set(Object.keys(X.dates).filter(d=>X.dates[d]>400));
  RES=F.parsed.map(f=>{
   const key=f6(f.card)+'|'+l4(f.card)+'|'+f.a;
@@ -635,7 +679,7 @@ document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
  ch=t.dataset.ch;document.documentElement.style.setProperty('--accent',CH[ch].accent);
  brand(ch);
  $('q').value='';$('filt').value='all';if(!IX[ch])index(ch);paintA();paintB();paintC();
- if(FL[ch]&&IX[ch].rows.length)run();else{$('res').hidden=true;$('gap').innerHTML='';}
+ if(FL[ch]&&IX[ch].count)run();else{$('res').hidden=true;$('gap').innerHTML='';}
  fixFlags();});
 function readDir(dr){return new Promise(res=>{
  const rd=dr.createReader(),acc=[];
@@ -662,9 +706,13 @@ async function backup(){
   if(!fs.length){alert('No '+CH[ch].name+' statements loaded yet.');return;}
   const btn=$('bBackup'),t0=btn.textContent;btn.textContent='Preparing …';btn.disabled=true;
   const out={v:2,channel:ch,made:new Date().toISOString(),files:{}};
+  let gone=0;
   for(const f of fs){
-   out.files[f]={hdr:DB[ch].files[f].hdr||[],rows:(await getRaw(ch,f))||[]};
+   const rows=(await getRaw(ch,f))||[];
+   if(!rows.length){gone++;continue;}
+   out.files[f]={hdr:DB[ch].files[f].hdr||[],rows:rows};
    await new Promise(r=>setTimeout(r,0));}
+  if(gone)alert(gone+' file'+(gone>1?'s are':' is')+' matched but no longer stored in full, so '+(gone>1?'they are':'it is')+' left out of the backup.');
   const blob=new Blob([JSON.stringify(out)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
   a.download='RRN statements '+CH[ch].name+' '+new Date().toISOString().slice(0,10)+'.rrnbak';
@@ -682,8 +730,11 @@ async function restore(file){
   for(const f of names){
    lbl.textContent='Restoring '+(n+1)+' of '+names.length+' — '+f;
    const rows=d.files[f].rows||[];
-   await putRaw(ch,f,rows);
-   DB[ch].files[f]={hdr:d.files[f].hdr||[],n:rows.length,ix:compact(rows)};
+   const ix=compact(rows);
+   let noRaw=false;
+   try{await putRaw(ch,f,rows);}catch(e){console.warn('raw not kept',f,e);noRaw=true;}
+   await putIx(ch,f,ix);
+   DB[ch].files[f]=fmeta(ix,d.files[f].hdr,rows.length,noRaw);
    n++;await new Promise(r=>requestAnimationFrame(()=>setTimeout(r,0)));}
   index(ch);paintA();if(FL[ch])run();await save();
   lbl.textContent=orig;
