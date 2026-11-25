@@ -4,213 +4,307 @@
 <title>RRN Check</title>
 <link rel="icon" id="fav" href="">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="vendor/xlsx.full.min.js"></script>
 <style>
-:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0);padding-bottom:env(safe-area-inset-bottom,0);
---page:#F4F1EC;--card:#FFFDFA;--ink:#1A1713;--mut:#6F6A62;--line:#E0DAD0;--soft:#EFEBE4;--head:#231F1A;
---pos:#B5651D;--ecom:#2E6E5B;--ok:#2E6E5B;--bad:#A33225;--warn:#8A6A18;
---okbg:#E6F0EB;--badbg:#F7E9E6;--warnbg:#F6EFDD;--sh:0 1px 2px rgba(26,23,19,.05),0 2px 6px rgba(26,23,19,.05)}
-@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--page:#131110;--card:#1C1917;--ink:#EDE8E1;--mut:#9C958B;
---line:#302B26;--soft:#221E1B;--head:#0D0B0A;--pos:#D9924E;--ecom:#6FBFA3;--ok:#6FBFA3;--bad:#E08A7C;--warn:#D4AF55;
---okbg:#182A24;--badbg:#2B1C18;--warnbg:#2A2415;--sh:0 2px 6px rgba(0,0,0,.4)}}
-*{box-sizing:border-box}html,body{margin:0}
-body{background:var(--page);color:var(--ink);font-family:Sora,Arial,sans-serif;font-size:13.5px;line-height:1.55;-webkit-font-smoothing:antialiased}
-.num{font-variant-numeric:tabular-nums}
-header{background:var(--head);color:#F2EDE6;padding:22px 24px 0}
-.hin{max-width:1300px;margin:0 auto}
-.brand{display:flex;align-items:center;gap:12px;margin-bottom:5px}
-.mark{width:34px;height:34px;flex:none}
-header h1{font-size:19px;font-weight:600;margin:0;letter-spacing:-.015em}
-header .tag{font-size:11px;color:#9C9388;letter-spacing:.14em;text-transform:uppercase;margin-top:1px}
-header p{margin:0 0 16px;font-size:12.5px;color:#A79D91;max-width:66ch}
-.tabs{display:flex;gap:4px}
-.tab{background:transparent;border:0;border-radius:7px 7px 0 0;padding:10px 20px;color:#A79D91;font:inherit;font-size:13px;font-weight:600;cursor:pointer;border-bottom:3px solid transparent}
-.tab:hover{color:#F2EDE6}.tab.on{background:var(--page);color:var(--ink)}
-.tab.on.pos{border-bottom-color:var(--pos)}.tab.on.ecom{border-bottom-color:var(--ecom)}
-.tab .d{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:8px;vertical-align:1px}
-.tab.pos .d{background:var(--pos)}.tab.ecom .d{background:var(--ecom)}
-main{max-width:1300px;margin:0 auto;padding:22px 24px 70px}
-@media(max-width:720px){header{padding:18px 14px 0}main{padding:18px 14px 50px}.tab{padding:10px 13px}}
-.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
-@media(max-width:1180px){.grid{grid-template-columns:1fr 1fr}}
-@media(max-width:780px){.grid{grid-template-columns:1fr}}
-.secth{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:26px 0 4px}
-.secth h2{font-size:16px;font-weight:600;margin:0}
-.secth .sub{font-size:12.5px;color:var(--mut)}
-.arrow{color:var(--mut);font-weight:700}
-td.was{color:var(--bad)}
-td.now{color:var(--ok);font-weight:600}
-.panel{background:var(--card);border:1px solid var(--line);border-radius:10px;box-shadow:var(--sh);padding:18px}
-.ph{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:2px}
-.ph h2{font-size:14.5px;font-weight:600;margin:0}
-.ph .ct{font-size:11px;color:var(--mut);letter-spacing:.1em;text-transform:uppercase}
-.psub{color:var(--mut);font-size:12px;margin:0 0 13px}
-.zone{border:1.5px dashed var(--line);border-radius:8px;padding:19px 14px;text-align:center;color:var(--mut);font-size:12.5px;cursor:pointer;transition:.12s;background:var(--soft)}
-.zone:hover,.zone.on{border-color:var(--accent);color:var(--ink)}
-.zone b{display:block;color:var(--ink);font-weight:600;margin-bottom:3px;font-size:13px}
-.zone:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-input[type=file]{display:none}
-.acts{margin-top:9px;display:flex;gap:7px;flex-wrap:wrap}
-.bar{height:3px;background:var(--line);border-radius:3px;overflow:hidden;margin-top:10px;display:none}
-.bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
-.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-top:13px}
-.kpi{background:var(--card);padding:10px 12px}
-.kpi .k{font-size:10.5px;color:var(--mut);letter-spacing:.07em;text-transform:uppercase}
-.kpi .v{font-size:16px;font-weight:600;letter-spacing:-.01em;margin-top:1px}
-.months{margin-top:13px;display:flex;flex-direction:column;gap:9px}
-.mo{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--soft)}
-.mo .mh{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px}
-.mo .mn{font-size:13px;font-weight:600}
-.mo .mc{font-size:11.5px;color:var(--mut)}
-.days{display:grid;grid-template-columns:repeat(31,1fr);gap:2px}
-.day{aspect-ratio:1;border-radius:3px;background:var(--line);position:relative;font-size:8px;display:flex;align-items:center;justify-content:center;color:transparent}
-.day.has{background:var(--ok);color:#fff;font-weight:600}
-.day.thin{background:var(--warn);color:#fff;font-weight:600}
-.day:hover::after{content:attr(data-t);position:absolute;bottom:135%;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--page);font-size:11px;padding:4px 8px;border-radius:5px;white-space:nowrap;z-index:9;font-weight:400}
-.flist{margin-top:12px;max-height:150px;overflow-y:auto;border:1px solid var(--line);border-radius:8px}
-.frow{display:flex;align-items:center;gap:10px;padding:7px 11px;border-bottom:1px solid var(--line);font-size:12px}
-.frow:last-child{border-bottom:0}
-.frow .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
-.frow .mt{color:var(--mut);font-size:11px;white-space:nowrap}
-.frow .nm b{display:block;font-weight:600}
-.frow .nm span{display:block;color:var(--mut);font-size:10.5px;font-weight:400}
-.dlb{background:transparent;border:0;color:var(--mut);cursor:pointer;font-size:14px;line-height:1;padding:2px 5px;border-radius:4px}
-.dlb:hover{color:var(--ok);background:var(--okbg)}
-.fsearch{width:100%;margin-top:10px;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:7px;padding:7px 10px;font:inherit;font-size:12px}
-.hint{font-size:11px;color:var(--mut);margin-top:6px}
-.x{background:transparent;border:0;color:var(--mut);cursor:pointer;font-size:17px;line-height:1;padding:1px 5px;border-radius:4px}
-.x:hover{color:var(--bad);background:var(--badbg)}
-.alert{background:var(--warnbg);border:1px solid var(--warn);border-left-width:4px;border-radius:9px;padding:15px 17px;margin-top:18px}
-.alert h3{margin:0 0 5px;font-size:13.5px;font-weight:600;color:var(--warn)}
-.alert p{margin:0 0 9px;font-size:12.5px}
-.chips{display:flex;flex-wrap:wrap;gap:6px}
-.chip{background:var(--card);border:1px solid var(--warn);border-radius:6px;padding:3px 9px;font-size:11.5px;font-weight:500}
-.bands{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:20px}
-@media(max-width:940px){.bands{grid-template-columns:1fr}}
-.band{border-radius:10px;padding:16px 18px;border:1px solid}
-.band.bad{background:var(--badbg);border-color:var(--bad)}
-.band.ok{background:var(--okbg);border-color:var(--ok)}
-.band.unk{background:var(--warnbg);border-color:var(--warn)}
-.band .n{font-size:30px;font-weight:700;letter-spacing:-.03em;line-height:1.05}
-.band.bad .n{color:var(--bad)}.band.ok .n{color:var(--ok)}.band.unk .n{color:var(--warn)}
-.band .t{font-weight:600;font-size:13px;margin-top:3px}
-.band .v{font-size:13.5px;font-weight:600;margin-top:6px}
-.band .dd{font-size:12px;color:var(--mut);margin-top:5px;line-height:1.45}
-.ctl{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:20px 0 11px}
-select,input[type=search]{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:7px;padding:9px 11px;font:inherit;font-size:12.5px}
+/* Colour in this page means one thing: whether the money arrived.
+   Everything structural stays neutral so anything coloured is a fact. */
+:root{
+  --paper:#F2F5F8; --card:#FFFFFF; --sunk:#E9EEF3;
+  --ink:#17222E; --ink2:#2E3D4E; --mute:#5B6B7C; --faint:#8798A9;
+  --rule:#D5DDE6; --hair:#E6ECF1;
+  --owed:#A8202B;    --owedbg:#FBEFF0;
+  --settled:#15694A; --settledbg:#EBF4F0;
+  --open:#8A6B1F;    --openbg:#FAF3E4;
+  --focus:#2563A8;
+  --r:6px;
+}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){
+  --paper:#0F161D; --card:#161F29; --sunk:#111922;
+  --ink:#E7EEF5; --ink2:#C2CFDC; --mute:#8CA0B3; --faint:#6B7E92;
+  --rule:#26323E; --hair:#1D2832;
+  --owed:#F08C8C;    --owedbg:#2A1618;
+  --settled:#6CC8A1; --settledbg:#12251F;
+  --open:#DBBA6B;    --openbg:#251F14;
+  --focus:#6AA5E8;
+}}
+:root[data-theme=dark]{
+  --paper:#0F161D; --card:#161F29; --sunk:#111922;
+  --ink:#E7EEF5; --ink2:#C2CFDC; --mute:#8CA0B3; --faint:#6B7E92;
+  --rule:#26323E; --hair:#1D2832;
+  --owed:#F08C8C;    --owedbg:#2A1618;
+  --settled:#6CC8A1; --settledbg:#12251F;
+  --open:#DBBA6B;    --openbg:#251F14;
+  --focus:#6AA5E8;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--paper); color:var(--ink);
+  font-family:'IBM Plex Sans','Segoe UI',system-ui,sans-serif;
+  font-size:13.5px; line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  padding-bottom:env(safe-area-inset-bottom,0);
+}
+.num,td,th,input,select{font-variant-numeric:tabular-nums}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:3px}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ---------------------------------------------------------- header */
+header{background:var(--ink);color:#EEF3F8}
+:root[data-theme=dark] header{background:#0A1016}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]) header{background:#0A1016}}
+.hin{max-width:1480px;margin:0 auto;padding:13px 26px;
+  display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:11px;margin-right:auto}
+.mark{width:30px;height:30px;flex:none;border-radius:7px}
+.brand h1{font-size:16px;font-weight:600;margin:0;letter-spacing:-.01em;line-height:1.2}
+.brand .tag{font-size:11.5px;color:#8FA2B5;line-height:1.3}
+
+.seg{display:flex;background:rgba(255,255,255,.07);border-radius:7px;padding:3px;gap:2px}
+.tab{
+  background:transparent;border:0;border-radius:5px;cursor:pointer;
+  font:inherit;font-size:12.5px;font-weight:500;color:#9FB2C4;
+  padding:6px 15px;display:flex;align-items:center;gap:7px;
+  transition:color .12s,background .12s;
+}
+.tab:hover{color:#EEF3F8}
+.tab.on{background:var(--card);color:var(--ink);font-weight:600}
+.tab .d{font-size:11px;color:var(--faint);font-weight:400}
+.tab.on .d{color:var(--mute)}
+
+.hbtn{background:transparent;border:1px solid rgba(255,255,255,.18);color:#C3D2E0;
+  border-radius:6px;padding:6px 11px;font:inherit;font-size:12px;cursor:pointer}
+.hbtn:hover{border-color:rgba(255,255,255,.4);color:#fff}
+
+main{max-width:1480px;margin:0 auto;padding:0 26px 60px}
+.lead{max-width:62ch;margin:26px 0 0;font-size:13.5px;color:var(--mute);line-height:1.6}
+.lead b{color:var(--ink);font-weight:600}
+
+/* ---------------------------------------------------------- verdict */
+.verdict{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;
+  background:var(--rule);border:1px solid var(--rule);border-radius:var(--r);
+  overflow:hidden;margin:26px 0 0}
+.vc{background:var(--card);padding:16px 20px 17px;position:relative}
+.vc::before{content:"";position:absolute;inset:0 0 auto 0;height:3px}
+.vc.owed::before{background:var(--owed)}
+.vc.settled::before{background:var(--settled)}
+.vc.open::before{background:var(--open)}
+.vc h3{margin:0;font-size:12.5px;font-weight:600;color:var(--ink2);letter-spacing:0}
+.vc .amt{font-size:27px;font-weight:600;letter-spacing:-.02em;line-height:1.15;margin:9px 0 2px}
+.vc.owed .amt{color:var(--owed)}
+.vc.settled .amt{color:var(--settled)}
+.vc.open .amt{color:var(--open)}
+.vc .cnt{font-size:12.5px;color:var(--mute)}
+.vc .note{font-size:11.5px;color:var(--faint);margin-top:8px;line-height:1.45;max-width:46ch}
+@media(max-width:860px){.verdict{grid-template-columns:1fr}}
+
+/* ---------------------------------------------------------- notice */
+.alert{background:var(--openbg);border:1px solid var(--rule);border-left:3px solid var(--open);
+  border-radius:var(--r);padding:14px 17px;margin-top:16px}
+.alert h3{margin:0 0 4px;font-size:13px;font-weight:600;color:var(--ink)}
+.alert p{margin:0;font-size:12.5px;color:var(--mute);max-width:78ch}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}
+.chips.hid{display:none}
+.morebtn{background:transparent;border:0;color:var(--ink);font:inherit;font-size:12px;
+  font-weight:600;cursor:pointer;margin-top:9px;padding:3px 0;text-decoration:underline;
+  text-underline-offset:3px;text-decoration-thickness:1px}
+.chip{background:var(--card);border:1px solid var(--rule);border-radius:20px;
+  padding:3px 11px;font-size:11.5px;color:var(--ink2)}
+.chip b{font-weight:600;margin-left:5px}
+
+/* ---------------------------------------------------------- filters */
+.filters{position:sticky;top:0;z-index:30;background:var(--paper);
+  border-bottom:1px solid var(--rule);margin-top:24px;padding:11px 0 12px}
+.filters.stuck{box-shadow:0 6px 16px -10px rgba(16,30,46,.4)}
+.frow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.frow+.frow{margin-top:8px}
+
+.pills{display:flex;gap:6px;margin-right:4px}
+.pill{background:var(--card);border:1px solid var(--rule);border-radius:var(--r);
+  padding:6px 12px;font:inherit;font-size:12.5px;color:var(--ink2);cursor:pointer;
+  display:flex;align-items:center;gap:8px;transition:border-color .12s}
+.pill i{width:8px;height:8px;border-radius:2px;flex:none;display:block}
+.pill.owed i{background:var(--owed)} .pill.settled i{background:var(--settled)} .pill.open i{background:var(--open)}
+.pill b{font-weight:600;font-variant-numeric:tabular-nums}
+.pill:hover{border-color:var(--faint)}
+.pill.on{color:var(--ink);font-weight:500}
+.pill.owed.on{background:var(--owedbg);border-color:var(--owed)}
+.pill.settled.on{background:var(--settledbg);border-color:var(--settled)}
+.pill.open.on{background:var(--openbg);border-color:var(--open)}
+
+select,input[type=search],input[type=number],input[type=text]{
+  background:var(--card);border:1px solid var(--rule);border-radius:var(--r);
+  color:var(--ink);font:inherit;font-size:12.5px;padding:6px 10px;min-height:32px}
+select{padding-right:26px;cursor:pointer;max-width:210px}
 input[type=search]{flex:1;min-width:190px}
-button.btn{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:7px;padding:8px 14px;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer}
-button.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
-button.btn:hover{filter:brightness(.97)}
-button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
-.tw{border:1px solid var(--line);border-radius:10px;overflow:auto;max-height:600px;background:var(--card);box-shadow:var(--sh)}
-table{border-collapse:collapse;width:100%;font-size:12px;min-width:1180px}
-thead th{background:var(--soft);border-bottom:1px solid var(--line);color:var(--mut);font-weight:600;text-align:left;padding:10px 11px;position:sticky;top:0;white-space:nowrap;z-index:2;font-size:11px;letter-spacing:.04em;text-transform:uppercase}
-tbody td{padding:8px 11px;border-bottom:1px solid var(--line);white-space:nowrap;vertical-align:top}
-tbody tr:hover td{background:var(--soft)}
-td.r{text-align:right}
-.pill{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:11.5px}
-.pill i{width:8px;height:8px;border-radius:50%;display:block}
-.pill.ok{color:var(--ok)}.pill.ok i{background:var(--ok)}
-.pill.bad{color:var(--bad)}.pill.bad i{background:var(--bad)}
-.pill.unk{color:var(--warn)}.pill.unk i{background:var(--warn)}
-.ev{display:inline-block;background:var(--soft);border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-size:10px;color:var(--mut);margin-right:3px;font-weight:600}
-.ev.rrn{background:var(--ok);border-color:var(--ok);color:#fff}
-.ev.y{background:var(--okbg);border-color:var(--ok);color:var(--ok)}
-.s{color:var(--mut);font-size:10.5px}
-.empty{padding:46px 20px;text-align:center;color:var(--mut)}
-.foot{margin-top:12px;font-size:12px;color:var(--mut)}
-@media(prefers-reduced-motion:reduce){*{transition:none!important}}
-</style></head><body>
+input[type=number]{width:120px}
+input::placeholder{color:var(--faint)}
+
+.btn{background:var(--card);border:1px solid var(--rule);border-radius:var(--r);
+  color:var(--ink);font:inherit;font-size:12.5px;font-weight:500;padding:6px 13px;
+  min-height:32px;cursor:pointer;transition:border-color .12s}
+.btn:hover{border-color:var(--faint)}
+.btn.pri{background:var(--ink);border-color:var(--ink);color:var(--paper);font-weight:600}
+.btn.pri:hover{opacity:.9}
+.btn.quiet{border-color:transparent;color:var(--mute);padding:6px 8px}
+.btn.quiet:hover{color:var(--ink);border-color:var(--rule)}
+.btn:disabled{opacity:.5;cursor:default}
+.spacer{margin-left:auto}
+
+/* ---------------------------------------------------------- table */
+.tw{border:1px solid var(--rule);border-top:0;border-radius:0 0 var(--r) var(--r);
+  background:var(--card);overflow:auto;max-height:calc(100vh - 150px)}
+table{border-collapse:collapse;width:100%;font-size:12.5px}
+thead th{position:sticky;top:0;z-index:2;background:var(--sunk);
+  text-align:left;font-weight:600;font-size:11.5px;color:var(--mute);
+  padding:9px 12px;border-bottom:1px solid var(--rule);white-space:nowrap}
+tbody td{padding:8px 12px;border-bottom:1px solid var(--hair);vertical-align:top}
+td.num{white-space:nowrap}
+td.how{min-width:168px}
+td.nm2{max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover td{background:var(--sunk)}
+th.r,td.r{text-align:right}
+td .s{font-size:11px;color:var(--faint);margin-top:2px}
+.empty{padding:42px 16px;text-align:center;color:var(--mute);font-size:13px}
+.foot{font-size:11.5px;color:var(--faint);margin:9px 2px 0}
+
+.stat{display:inline-flex;align-items:center;gap:7px;white-space:nowrap;font-weight:500}
+.stat i{width:8px;height:8px;border-radius:2px;flex:none}
+.stat.ok{color:var(--settled)} .stat.ok i{background:var(--settled)}
+.stat.bad{color:var(--owed)}   .stat.bad i{background:var(--owed)}
+.stat.unk{color:var(--open)}   .stat.unk i{background:var(--open)}
+
+.ev{display:inline-block;border:1px solid var(--rule);border-radius:3px;
+  padding:0 5px;font-size:10px;line-height:1.7;color:var(--mute);margin:0 3px 2px 0;white-space:nowrap}
+.ev.rrn{border-color:var(--settled);color:var(--settled);font-weight:600}
+
+/* ---------------------------------------------------------- sources */
+.srcbar{margin-top:30px;border:1px solid var(--rule);border-radius:var(--r);background:var(--card)}
+.srchead{display:flex;align-items:center;gap:14px;padding:12px 17px;cursor:pointer;flex-wrap:wrap}
+.srchead h2{margin:0;font-size:13.5px;font-weight:600}
+.srcsum{font-size:12.5px;color:var(--mute);display:flex;gap:16px;flex-wrap:wrap}
+.srcsum span b{color:var(--ink);font-weight:600}
+.caret{margin-left:auto;color:var(--mute);font-size:12px;transition:transform .15s}
+.srcbar.open .caret{transform:rotate(180deg)}
+.srcbody{display:none;border-top:1px solid var(--rule);padding:18px 17px 20px}
+.srcbar.open .srcbody{display:block}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:16px}
+.panel{border:1px solid var(--rule);border-radius:var(--r);padding:15px 16px;background:var(--card)}
+.ph{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:3px}
+.ph h2{margin:0;font-size:13px;font-weight:600}
+.ct{font-size:11.5px;color:var(--faint)}
+.psub{margin:0 0 12px;font-size:12px;color:var(--mute);line-height:1.45}
+.zone{border:1px dashed var(--rule);border-radius:var(--r);background:var(--sunk);
+  padding:18px 14px;text-align:center;cursor:pointer;font-size:12px;color:var(--mute)}
+.zone b{display:block;color:var(--ink);font-size:13px;font-weight:600;margin-bottom:3px}
+.zone:hover,.zone.on{border-color:var(--focus);color:var(--ink2)}
+.acts{display:flex;gap:7px;flex-wrap:wrap;margin-top:11px}
+.hint{font-size:11.5px;color:var(--faint);margin-top:9px;line-height:1.45}
+input[type=file]{display:none}
+.bar{display:none;height:3px;background:var(--sunk);border-radius:2px;margin-top:11px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--ink2);transition:width .15s}
+
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--rule);
+  border:1px solid var(--rule);border-radius:var(--r);overflow:hidden;margin-top:13px}
+.kpi{background:var(--card);padding:9px 11px}
+.kpi .k{font-size:11px;color:var(--faint)}
+.kpi .v{font-size:14px;font-weight:600;margin-top:1px;letter-spacing:-.01em}
+
+.months{display:flex;flex-direction:column;gap:11px;margin-top:13px;max-height:260px;overflow:auto}
+.mo{border:1px solid var(--rule);border-radius:var(--r);padding:9px 11px}
+.mh{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:7px}
+.mn{font-size:12px;font-weight:600}
+.mc{font-size:11px;color:var(--faint)}
+.days{display:grid;grid-template-columns:repeat(16,1fr);gap:2px}
+.day{height:15px;border-radius:2px;background:var(--sunk);font-size:8.5px;color:transparent;
+  display:flex;align-items:center;justify-content:center;cursor:default}
+.day.thin{background:var(--openbg);border:1px solid var(--open)}
+.day.has{background:var(--settled)}
+.day:hover{color:var(--ink);background:var(--rule)}
+
+.flist{margin-top:13px;border:1px solid var(--rule);border-radius:var(--r);
+  max-height:230px;overflow:auto}
+.frow2{display:flex;align-items:center;gap:9px;padding:7px 11px;border-bottom:1px solid var(--hair);font-size:12px}
+.flist>div:last-child{border-bottom:0}
+.nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nm b{font-weight:500}
+.nm span{color:var(--faint);margin-left:7px;font-size:11px}
+.mt{color:var(--mute);font-size:11.5px}
+.x,.dlb{background:transparent;border:0;color:var(--faint);cursor:pointer;
+  font-size:14px;line-height:1;padding:2px 5px;border-radius:3px}
+.x:hover{color:var(--owed);background:var(--owedbg)}
+.dlb:hover{color:var(--ink);background:var(--sunk)}
+
+.secth{display:flex;align-items:baseline;gap:12px;margin:30px 0 0}
+.secth h2{margin:0;font-size:16px;font-weight:600;letter-spacing:-.01em}
+.secth .sub{font-size:12.5px;color:var(--mute)}
+.ctl{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:12px 0}
+
+.split{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--mute);
+  border:1px solid var(--rule);border-radius:20px;padding:2px 10px;margin-left:8px}
+.split b{color:var(--ink);font-weight:600}
+</style>
+</head><body>
 
 <header><div class="hin">
-<div class="brand">
-<svg class="mark" viewBox="0 0 40 40" aria-hidden="true">
-<rect id="mkBg" width="40" height="40" rx="9" fill="#B5651D"/>
-<g fill="#FFFDFA">
-<rect x="7.5" y="8.5" width="2.8" height="23" rx="1.4"/>
-<rect x="13" y="8.5" width="1.6" height="23" rx=".8"/>
-<rect x="17.3" y="8.5" width="3.4" height="23" rx="1.7"/>
-<rect x="23.4" y="8.5" width="1.6" height="23" rx=".8"/>
-<rect x="27.8" y="8.5" width="2.8" height="23" rx="1.4"/>
-</g>
-<circle cx="29.6" cy="29.6" r="8.1" fill="#FFFDFA"/>
-<path id="mkTick" d="M25.9 29.7l2.7 2.7 4.7-5.2" stroke="#B5651D" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>
-<div><h1>RRN Check</h1><div class="tag">Settlement verification</div></div>
-</div>
-<p>Matched on RRN first, the one reference that never repeats. Load the bank's merchant statements once, then drop in a flags file. Add your own transaction export to find the correct transaction behind each flag.</p>
-<div class="tabs">
-<button class="tab pos on" data-ch="pos"><span class="d"></span>POS</button>
-<button class="tab ecom" data-ch="ecom"><span class="d"></span>E-Commerce</button>
-</div></div></header>
+  <div class="brand">
+    <svg class="mark" viewBox="0 0 40 40" aria-hidden="true">
+      <rect id="mkBg" width="40" height="40" rx="9" fill="#17222E"/>
+      <g fill="#FFFFFF">
+        <rect x="7.5" y="8.5" width="2.8" height="23" rx="1.4"/>
+        <rect x="13" y="8.5" width="1.6" height="23" rx=".8"/>
+        <rect x="17.3" y="8.5" width="3.4" height="23" rx="1.7"/>
+        <rect x="23.4" y="8.5" width="1.6" height="23" rx=".8"/>
+        <rect x="27.8" y="8.5" width="2.8" height="23" rx="1.4"/>
+      </g>
+      <circle cx="29.6" cy="29.6" r="8.1" fill="#FFFFFF"/>
+      <path id="mkTick" d="M25.9 29.7l2.7 2.7 4.7-5.2" stroke="#17222E" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <div><h1>RRN Check</h1><div class="tag">Settlement verification</div></div>
+  </div>
+
+  <div class="seg" role="tablist" aria-label="Channel">
+    <button class="tab pos on" data-ch="pos" role="tab">POS <span class="d" id="dPos"></span></button>
+    <button class="tab ecom" data-ch="ecom" role="tab">E-Commerce <span class="d" id="dEcom"></span></button>
+  </div>
+  <button class="hbtn" id="bTheme" type="button">Dark</button>
+</div></header>
 
 <main>
-<div class="grid">
-  <section class="panel">
-    <div class="ph"><h2>Merchant statements</h2><span class="ct" id="ctA"></span></div>
-    <p class="psub" id="subA">What the bank says it settled. Saved in this browser, exactly as you loaded it. Only files with <b>Tool</b> in the name are taken from a folder.</p>
-    <div class="zone" id="zA" tabindex="0" role="button"><b>Add statement files or folders</b>Drop as many folders as you like at once, or click to pick files.</div>
-    <input type="file" id="iA" multiple accept=".xlsx,.xls,.csv">
-    <input type="file" id="iD" webkitdirectory directory multiple>
-    <div class="acts">
-      <button class="btn" id="bFolder" type="button" title="Pick the folder that contains your month folders – everything inside is read">Add a folder</button>
-      <button class="btn" id="bDump" type="button">Download statements</button>
-      <button class="btn" id="bBackup" type="button" title="Save every loaded statement into one file, so you can move them to another computer or to the shared version">Back up statements</button>
-      <button class="btn" id="bRestore" type="button" title="Load statements back from a backup file">Restore backup</button>
-      <input type="file" id="iR" accept=".rrnbak,.json" hidden>
-    </div>
-    <div class="hint">Browsers only allow one folder per dialog. Pick the folder that holds your month folders and everything inside is read, or drag several folders onto the box above. Files always add to what is already there.</div>
-    <div class="bar" id="bar"><i></i></div>
-    <div class="hint" id="addmsg"></div>
-    <div id="kA"></div><div id="mA"></div><div id="lA"></div>
-  </section>
 
-  <section class="panel">
-    <div class="ph"><h2>Flags</h2><span class="ct" id="ctB"></span></div>
-    <p class="psub">Transactions your system still shows as unsettled.</p>
-    <div class="zone" id="zB" tabindex="0" role="button"><b>Add a flags file</b>Drop it here or click.</div>
-    <input type="file" id="iB" accept=".xlsx,.xls,.csv">
-    <div class="acts"><button class="btn" id="bFlags" type="button">Download flags</button></div>
-    <div id="kB"></div><div id="mB"></div><div id="lB"></div>
-  </section>
-
-  <section class="panel">
-    <div class="ph"><h2>Kashier transactions</h2><span class="ct" id="ctC"></span></div>
-    <p class="psub">Your own transaction export, used to find the correct transaction behind each RRN.</p>
-    <div class="zone" id="zC" tabindex="0" role="button"><b>Add a transactions file</b>Drop it here or click.</div>
-    <input type="file" id="iC" accept=".xlsx,.xls,.csv">
-    <div class="acts"><button class="btn" id="bFix" type="button">Download corrections</button></div>
-    <div id="kC"></div><div id="lC"></div>
-  </section>
-</div>
-
-<div id="fixwrap" hidden>
-  <div class="secth"><h2>Flag corrections</h2><span class="sub" id="fixsub"></span></div>
-  <div class="ctl">
-    <select id="ffilt"><option value="all">All flags</option><option value="diff">Wrong transaction only</option><option value="same">Already correct</option><option value="none">RRN not found</option></select>
-    <input type="search" id="fq" placeholder="Search RRN, store, merchant, transaction ID">
-  </div>
-  <div class="tw"><table><thead><tr>
-    <th>RRN</th><th>Status</th>
-    <th>Flag – Transaction ID</th><th>Flag – MID</th><th>Flag – Store Name</th>
-    <th></th>
-    <th>Correct – Transaction ID</th><th>Correct – MID</th><th>Correct – Store Name</th>
-    <th class="r">Amount</th><th>Date</th>
-  </tr></thead><tbody id="ftb"></tbody></table></div>
-  <p class="foot" id="ffoot"></p>
-</div>
-
-<div id="gap"></div>
 <div id="res" hidden>
-  <div class="bands" id="bands"></div>
-  <div class="ctl">
-    <select id="filt"><option value="all">All transactions</option><option value="bad">Still owed to us</option><option value="ok">Already settled</option><option value="unk">No statement loaded</option></select>
-    <select id="mfilt"><option value="all">All months</option></select>
-    <input type="search" id="q" placeholder="Search RRN, merchant, card, amount">
-    <button class="btn pri" id="dl">Download result</button>
+  <div class="verdict" id="bands"></div>
+  <div id="gap"></div>
+
+  <div class="filters" id="fbar">
+    <div class="frow">
+      <div class="pills">
+        <button class="pill owed on" data-st="bad" type="button"><i></i>Still owed <b id="nBad">0</b></button>
+        <button class="pill settled on" data-st="ok" type="button"><i></i>Settled <b id="nOk">0</b></button>
+        <button class="pill open on" data-st="unk" type="button"><i></i>Can't judge <b id="nUnk">0</b></button>
+      </div>
+      <select id="mfilt" aria-label="Month"><option value="all">All months</option></select>
+      <select id="merch" aria-label="Merchant"><option value="all">All merchants</option></select>
+      <select id="how" aria-label="Matched on">
+        <option value="all">Matched any way</option>
+        <option value="RRN">On RRN</option>
+        <option value="merchant no.">On merchant number</option>
+        <option value="merchant name">On merchant name</option>
+        <option value="none">Not matched</option>
+      </select>
+      <input type="number" id="minAmt" min="0" step="1" placeholder="Min EGP" aria-label="Minimum amount">
+      <button class="btn quiet" id="bClear" type="button">Clear filters</button>
+    </div>
+    <div class="frow">
+      <input type="search" id="q" placeholder="Search RRN, merchant, card, transaction ID or amount">
+      <span class="spacer"></span>
+      <button class="btn pri" id="dl" type="button">Download result</button>
+    </div>
   </div>
+
   <div class="tw"><table><thead><tr>
     <th>Status</th><th>Matched on</th><th>RRN</th><th>Merchant</th><th>Merchant no.</th>
     <th>Transaction ID</th><th>Flag date</th><th class="r">Amount</th><th>Card</th><th>Auth</th>
@@ -218,11 +312,90 @@ td.r{text-align:right}
   </tr></thead><tbody id="tb"></tbody></table></div>
   <p class="foot" id="foot"></p>
 </div>
+
+<div id="fixwrap" hidden>
+  <div class="secth"><h2>Flag corrections</h2><span class="sub" id="fixsub"></span></div>
+  <div class="ctl">
+    <select id="ffilt">
+      <option value="all">All flags</option>
+      <option value="diff">Wrong transaction only</option>
+      <option value="same">Already correct</option>
+      <option value="none">RRN not found</option>
+    </select>
+    <input type="search" id="fq" placeholder="Search RRN, store, merchant or transaction ID">
+    <span class="spacer"></span>
+    <button class="btn" id="bFix" type="button">Download corrections</button>
+  </div>
+  <div class="tw" style="border-top:1px solid var(--rule);border-radius:var(--r)"><table><thead><tr>
+    <th>RRN</th><th>Status</th>
+    <th>Flag transaction ID</th><th>Flag MID</th><th>Flag store</th>
+    <th></th>
+    <th>Correct transaction ID</th><th>Correct MID</th><th>Correct store</th>
+    <th class="r">Amount</th><th>Date</th>
+  </tr></thead><tbody id="ftb"></tbody></table></div>
+  <p class="foot" id="ffoot"></p>
+</div>
+
+<p class="lead" id="lead">Load the bank's merchant statements once — a whole folder at a time. Then drop in a flags file, and this page separates what the bank <b>still owes you</b> from what it has <b>already settled</b>.</p>
+
+<div class="srcbar open" id="srcbar">
+  <div class="srchead" id="srchead" tabindex="0" role="button" aria-expanded="true">
+    <h2>Sources</h2>
+    <div class="srcsum" id="srcsum"></div>
+    <span class="caret" aria-hidden="true">&#9662;</span>
+  </div>
+  <div class="srcbody">
+    <div class="grid">
+
+      <section class="panel">
+        <div class="ph"><h2>Merchant statements</h2><span class="ct" id="ctA"></span></div>
+        <p class="psub" id="subA">What the bank says it settled. Kept in this browser. From a folder, only files with <b>Tool</b> in the name are read.</p>
+        <div class="zone" id="zA" tabindex="0" role="button"><b>Add statement files or folders</b>Drop folders here, or click to pick files.</div>
+        <input type="file" id="iA" multiple accept=".xlsx,.xls,.csv">
+        <input type="file" id="iD" webkitdirectory directory multiple>
+        <input type="file" id="iR" accept=".rrnbak,.json">
+        <div class="acts">
+          <button class="btn" id="bFolder" type="button">Add a folder</button>
+          <button class="btn" id="bDump" type="button">Download statements</button>
+          <button class="btn" id="bBackup" type="button">Back up</button>
+          <button class="btn" id="bRestore" type="button">Restore</button>
+        </div>
+        <div class="hint">One folder per dialog. Pick the folder that holds your month folders and everything inside it is read. Files always add to what is already there.</div>
+        <div class="bar" id="bar"><i></i></div>
+        <div class="hint" id="addmsg"></div>
+        <div id="kA"></div><div id="mA"></div><div id="lA"></div>
+      </section>
+
+      <section class="panel">
+        <div class="ph"><h2>Flags</h2><span class="ct" id="ctB"></span></div>
+        <p class="psub">Transactions your system still shows as unsettled. One file covering both channels is split by its Channel column.</p>
+        <div class="zone" id="zB" tabindex="0" role="button"><b>Add a flags file</b>Drop it here or click.</div>
+        <input type="file" id="iB" accept=".xlsx,.xls,.csv">
+        <div class="acts"><button class="btn" id="bFlags" type="button">Download flags</button></div>
+        <div class="hint" id="splitmsg"></div>
+        <div id="kB"></div><div id="mB"></div><div id="lB"></div>
+      </section>
+
+      <section class="panel">
+        <div class="ph"><h2>Kashier transactions</h2><span class="ct" id="ctC"></span></div>
+        <p class="psub">Your own transaction export, used to find the correct transaction behind each RRN.</p>
+        <div class="zone" id="zC" tabindex="0" role="button"><b>Add a transactions file</b>Drop it here or click.</div>
+        <input type="file" id="iC" accept=".xlsx,.xls,.csv">
+        <div class="acts"><button class="btn" id="bFixDl" type="button">Download corrections</button></div>
+        <div id="kC"></div><div id="lC"></div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
 </main>
+
 
 <script>
 const $=i=>document.getElementById(i);
 const CH={pos:{name:'POS',accent:'var(--pos)'},ecom:{name:'E-Commerce',accent:'var(--ecom)'}};
+let FST={bad:true,ok:true,unk:true};
 let ch='pos', DB={pos:{files:{}},ecom:{files:{}}}, IX={pos:null,ecom:null}, FL={pos:null,ecom:null}, TX={pos:null,ecom:null}, RES=[], CORR=[];
 const norm=v=>String(v==null?'':v).trim();
 const dig=v=>norm(v).replace(/\D/g,'');
@@ -251,7 +424,8 @@ const MS_SPEC={mid:['merchant number','merchant no'],card:['card number','card h
  bdate:['batch_date','batch date','statement date']};
 const FL_SPEC={mid:['merchant number'],store:['store name','merchant name'],mi:['merchant id'],
  tx:['transaction id'],date:['date'],amt:['amount'],card:['card number'],
- rrn:['rrn','reference_number'],auth:['gateway transaction reference','authorization']};
+ rrn:['rrn','reference_number'],auth:['gateway transaction reference','authorization'],
+ chan:['channel']};
 const TX_SPEC={rrn:['rrn','reference number','reference_number'],tx:['transaction id'],
  mi:['merchant id'],store:['store name','merchant name'],amt:['amount'],date:['date'],
  card:['card number'],status:['status']};
@@ -412,11 +586,11 @@ function drawFiles(){
  $('lA').innerHTML='<input class="fsearch" id="fsq" type="search" placeholder="Find a statement by name" value="'+(window._fq||'').replace(/"/g,'&quot;')+'">'+
   '<div class="flist">'+(show.length?show.map(f=>{
    const m=meta[f]||{},rng=m.from?(m.from===m.to?pretty(m.from):pretty(m.from)+' \u2013 '+pretty(m.to)):'';
-   return '<div class="frow"><span class="nm"><b>'+f+'</b>'+(rng?'<span>'+rng+'</span>':'')+'</span>'+
+   return '<div class="frow2"><span class="nm"><b>'+f+'</b>'+(rng?'<span>'+rng+'</span>':'')+'</span>'+
     '<span class="mt num">'+plain(m.n||DB[ch].files[f].rows.length)+'</span>'+
     '<button class="dlb" data-f="'+encodeURIComponent(f)+'" title="Download this statement">&#8681;</button>'+
     '<button class="x" data-f="'+encodeURIComponent(f)+'" title="Remove">&times;</button></div>';}).join('')
-   :'<div class="frow"><span class="nm" style="color:var(--mut)">Nothing matches that name.</span></div>')+'</div>'+
+   :'<div class="frow2"><span class="nm" style="color:var(--mute)">Nothing matches that name.</span></div>')+'</div>'+
   '<div class="hint">'+plain(fs.length)+' statement file'+(fs.length>1?'s':'')+' loaded.'+memNote()+' Use \u2193 to download one on its own.</div>';
  const si=$('fsq');
  if(si){si.oninput=()=>{window._fq=si.value;drawFiles();setTimeout(()=>{const n=$('fsq');if(n){n.focus();n.setSelectionRange(n.value.length,n.value.length);}},0);};}
@@ -440,13 +614,13 @@ function paintB(){
   ['With an RRN',plain(withR)],['Period',ds.length?pretty(ds[0])+' \u2013 '+pretty(ds[ds.length-1]):'\u2014']]);
  const cnt={};for(const r of F.parsed)if(r.date)cnt[r.date]=(cnt[r.date]||0)+1;
  $('mB').innerHTML=monthView(cnt);
- $('lB').innerHTML='<div class="flist"><div class="frow"><span class="nm">'+F.name+'</span><span class="mt num">'+plain(F.rows.length)+'</span><button class="x" id="xf" title="Remove">&times;</button></div></div>';
+ $('lB').innerHTML='<div class="flist"><div class="frow2"><span class="nm">'+F.name+'</span><span class="mt num">'+plain(F.rows.length)+'</span><button class="x" id="xf" title="Remove">&times;</button></div></div>';
  $('xf').onclick=()=>{FL[ch]=null;RES=[];paintB();$('res').hidden=true;$('gap').innerHTML='';};}
 async function delFile(name){
  if(!DB[ch].files[name]||!confirm('Remove "'+name+'"?'))return;
  delete DB[ch].files[name]; try{await dropRaw(ch,name);}catch(e){console.error(e);}
  try{await dropIx(ch,name);}catch(e){console.error(e);}
- index(ch); paintA(); if(FL[ch])run(); save();}
+ index(ch); paintA(); paintTabs(); if(FL[ch])run(); save();}
 async function addMS(files,onlyTool){
  let list=Array.from(files).filter(f=>/\.(xlsx|xls|csv)$/i.test(f.name));
  if(onlyTool){
@@ -471,7 +645,7 @@ async function addMS(files,onlyTool){
   await new Promise(r=>requestAnimationFrame(()=>setTimeout(r,0)));}
  lbl.textContent='Indexing \u2026';
  await new Promise(r=>setTimeout(r,20));
- index(ch); paintA(); if(FL[ch])run();
+ index(ch); paintA(); paintTabs(); if(FL[ch])run();
  const total=Object.keys(DB[ch].files).length;
  $('addmsg').textContent=added?('Added '+added+' file'+(added>1?'s':'')+(skipped?', '+skipped+' already loaded':'')+'. '+total+' in total.')
    :(skipped?'Those '+skipped+' file'+(skipped>1?'s were':' was')+' already loaded. '+total+' in total.':'');
@@ -481,15 +655,43 @@ async function addMS(files,onlyTool){
  save().then(()=>{lbl.textContent=orig;});
  setTimeout(()=>{bar.style.display='none';bar.firstElementChild.style.width='0';},350);}
 async function addFlags(file){
- const lbl=$('ctB'); lbl.textContent='Reading \u2026';
+ const lbl=$('ctB'); lbl.textContent='Reading …';
  let d;try{d=await read(file);}catch(e){readFail(file,e,lbl,CH[ch].name);return;}
- const M=d.rows.length?mapCols(Object.keys(d.rows[0]),FL_SPEC):{};
- FL[ch]={name:file.name,hdr:d.hdr,rows:d.rows,
-  parsed:d.rows.map((r,i)=>({i,mid:M.mid?dig(r[M.mid]):'',store:M.store?norm(r[M.store]):'',
+ const keys=d.rows.length?Object.keys(d.rows[0]):[];
+ const M=keys.length?mapCols(keys,FL_SPEC):{};
+ /* One export can carry both channels. Send each row to the side it belongs to,
+    so POS flags are never checked against e-commerce statements or the reverse. */
+ const bucket={pos:[],ecom:[]};let unknown=0;
+ for(const r of d.rows){
+  const v=M.chan?norm(r[M.chan]).toLowerCase():'';
+  let c;
+  if(/pos|point of sale/.test(v))c='pos';
+  else if(/online|e-?commerce|ecom/.test(v))c='ecom';
+  else {c=ch;unknown++;}
+  bucket[c].push(r);}
+ const build=(name,rows)=>({name:name,hdr:d.hdr,rows:rows,
+  parsed:rows.map((r,i)=>({i,mid:M.mid?dig(r[M.mid]):'',store:M.store?norm(r[M.store]):'',
    mi:M.mi?norm(r[M.mi]):'',tx:M.tx?norm(r[M.tx]):'',date:M.date?isoC(r[M.date]):'',
    a:M.amt?amt(r[M.amt]):null,card:M.card?norm(r[M.card]):'',rrn:M.rrn?dig(r[M.rrn]):'',
-   auth:M.auth?norm(r[M.auth]):''}))};
- paintB();run();}
+   auth:M.auth?norm(r[M.auth]):''}))});
+ for(const c of ['pos','ecom']){
+  if(bucket[c].length)FL[c]=build(file.name,bucket[c]);
+  else if(M.chan&&!unknown)FL[c]=null;}
+ const parts=[];
+ if(bucket.ecom.length)parts.push(plain(bucket.ecom.length)+' e-commerce');
+ if(bucket.pos.length)parts.push(plain(bucket.pos.length)+' POS');
+ $('splitmsg').textContent=(M.chan&&parts.length>1)
+  ? ('Split by the Channel column: '+parts.join(' and ')+'. Each side is checked only against its own statements.')
+  : (unknown?plain(unknown)+' row'+(unknown===1?'':'s')+' carry no channel, so they are kept on the tab you loaded them from.':'');
+ /* Nothing in this file belongs to the tab you are on — go where the rows went. */
+ if(!FL[ch]){
+  const other=ch==='pos'?'ecom':'pos';
+  if(FL[other]){
+   $('splitmsg').textContent='Every row in this file is '+CH[other].name+', so '+CH[other].name+' is now showing.'
+    +(M.chan?'':' Add a Channel column if you want it split.');
+   const t=document.querySelector('.tab[data-ch="'+other+'"]');
+   if(t){t.click();return;}}}
+ paintTabs();paintB();run();}
 async function addTX(file){
  const lbl=$('ctC'); lbl.textContent='Reading \u2026';
  let d;try{d=await read(file);}catch(e){readFail(file,e,lbl,CH[ch].name);return;}
@@ -584,38 +786,72 @@ async function run(){
    net:hit?hit[9]:null,sauth:hit?hit[4]:'',srrn:hit?hit[11]:''};});
  const ms=[...new Set(RES.map(r=>r.date&&r.date.slice(0,7)).filter(Boolean))].sort();
  $('mfilt').innerHTML='<option value="all">All months</option>'+ms.map(m=>'<option value="'+m+'">'+MF[+m.slice(5,7)-1]+' '+m.slice(0,4)+'</option>').join('');
- gaps();draw();$('res').hidden=false;}
+ const mers=[...new Set(RES.map(r=>r.store).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+ $('merch').innerHTML='<option value="all">All merchants ('+plain(mers.length)+')</option>'+
+  mers.map(m=>'<option value="'+m.replace(/"/g,'&quot;')+'">'+m+'</option>').join('');
+ FST={bad:true,ok:true,unk:true};$('minAmt').value='';$('how').value='all';$('merch').value='all';
+ gaps();draw();$('res').hidden=false;paintTabs();toggleSrc(false);}
 function gaps(){
  const need={};
  for(const r of RES)if(r.st==='unk'&&r.date)need[r.date]=(need[r.date]||0)+(r.a||0);
  const ks=Object.keys(need).sort();
  if(!ks.length){$('gap').innerHTML='';return;}
- const tot=ks.reduce((s,k)=>s+need[k],0);
- $('gap').innerHTML='<div class="alert"><h3>'+ks.length+' date'+(ks.length>1?'s':'')+' cannot be checked yet</h3>'+
-  '<p>No merchant statement is loaded for these dates, so EGP '+money(tot)+' is still undecided. Add the statement files for them and the result updates on its own.</p>'+
-  '<div class="chips">'+ks.map(k=>'<span class="chip">'+pretty(k)+' <b class="num">'+money(need[k])+'</b></span>').join('')+'</div></div>';}
+ const tot=ks.reduce((s,k)=>s+need[k],0),SHOW=8,rest=ks.length-SHOW;
+ const chip=k=>'<span class="chip">'+pretty(k)+' <b class="num">'+money(need[k])+'</b></span>';
+ $('gap').innerHTML='<div class="alert"><h3>'+plain(ks.length)+' date'+(ks.length>1?'s':'')+' cannot be checked yet</h3>'+
+  '<p>No merchant statement is loaded for '+(ks.length>1?'these dates':'this date')+', so EGP '+money(tot)+
+  ' is still undecided. Add the statement files for '+(ks.length>1?'them':'it')+' and the result updates on its own.</p>'+
+  '<div class="chips">'+ks.slice(0,SHOW).map(chip).join('')+'</div>'+
+  (rest>0?'<div class="chips hid" id="gapmore">'+ks.slice(SHOW).map(chip).join('')+'</div>'+
+    '<button class="morebtn" id="gaptog" type="button">Show the other '+plain(rest)+'</button>':'')+
+  '</div>';
+ const t=$('gaptog');
+ if(t)t.onclick=()=>{const m=$('gapmore'),h=m.classList.toggle('hid');
+  t.textContent=h?('Show the other '+plain(rest)):'Show fewer';};}
 function draw(){
- const f=$('filt').value,mf=$('mfilt').value,q=$('q').value.trim().toLowerCase();
+ const mf=$('mfilt').value,q=$('q').value.trim().toLowerCase();
+ const mv=$('merch').value,hw=$('how').value;
+ const minA=parseFloat($('minAmt').value);
  const base=mf==='all'?RES:RES.filter(r=>r.date&&r.date.slice(0,7)===mf);
  const sum=c=>{const x=base.filter(r=>r.st===c);return[x.length,x.reduce((s,r)=>s+(r.a||0),0)];};
  const [on,oa]=sum('ok'),[bn,ba]=sum('bad'),[un,ua]=sum('unk');
  const byr=base.filter(r=>r.st==='ok'&&r.byRRN).length;
  $('bands').innerHTML=
-  '<div class="band bad"><div class="n num">'+plain(bn)+'</div><div class="t">Still owed to us</div><div class="v num">EGP '+money(ba)+'</div><div class="dd">Not in any statement you have loaded. These are the ones to send to the bank.</div></div>'+
-  '<div class="band ok"><div class="n num">'+plain(on)+'</div><div class="t">Already settled</div><div class="v num">EGP '+money(oa)+'</div><div class="dd">'+plain(byr)+' matched on RRN, which cannot repeat. Keep these out of your submission.</div></div>'+
-  '<div class="band unk"><div class="n num">'+plain(un)+'</div><div class="t">No statement loaded</div><div class="v num">EGP '+money(ua)+'</div><div class="dd">Cannot be decided until you add the statements for those dates.</div></div>';
- const show=base.filter(r=>(f==='all'||r.st===f)&&(!q||[r.mid,r.store,r.mi,r.tx,r.card,String(r.a),r.auth,r.rrn].join(' ').toLowerCase().includes(q)));
+  '<div class="vc owed"><h3>Still owed to us</h3>'+
+   '<div class="amt num">EGP '+money(ba)+'</div><div class="cnt num">'+plain(bn)+' flag'+(bn===1?'':'s')+'</div>'+
+   '<p class="note">Not in any statement you have loaded. This is the list to send to the bank.</p></div>'+
+  '<div class="vc settled"><h3>Already settled</h3>'+
+   '<div class="amt num">EGP '+money(oa)+'</div><div class="cnt num">'+plain(on)+' flag'+(on===1?'':'s')+'</div>'+
+   '<p class="note">'+plain(byr)+' of these matched on RRN, which never repeats. Keep them out of your submission.</p></div>'+
+  '<div class="vc open"><h3>Can’t judge yet</h3>'+
+   '<div class="amt num">EGP '+money(ua)+'</div><div class="cnt num">'+plain(un)+' flag'+(un===1?'':'s')+'</div>'+
+   '<p class="note">No statement is loaded for those dates. Add them and these resolve themselves.</p></div>';
+ $('nBad').textContent=plain(bn);$('nOk').textContent=plain(on);$('nUnk').textContent=plain(un);
+ document.querySelectorAll('.pill').forEach(p=>p.classList.toggle('on',!!FST[p.dataset.st]));
+
+ const show=base.filter(r=>{
+  if(!FST[r.st])return false;
+  if(mv!=='all'&&r.store!==mv)return false;
+  if(hw!=='all'){
+   if(hw==='none'){if(r.how.length)return false;}
+   else if(r.how[0]!==hw)return false;}
+  if(!isNaN(minA)&&(r.a||0)<minA)return false;
+  if(q&&![r.mid,r.store,r.mi,r.tx,r.card,String(r.a),r.auth,r.rrn].join(' ').toLowerCase().includes(q))return false;
+  return true;});
  const lab={ok:'Settled',bad:'Owed',unk:'Unknown'};
  $('tb').innerHTML=show.length?show.slice(0,400).map(r=>
-  '<tr><td><span class="pill '+r.st+'"><i></i>'+lab[r.st]+'</span></td>'+
-  '<td>'+(r.how.length?r.how.map(h=>'<span class="ev '+(h==='RRN'?'rrn':'y')+'">'+h+'</span>').join(''):'<span class="ev">no match</span>')+'</td>'+
-  '<td class="num">'+r.rrn+'</td><td>'+r.store+'</td><td class="num">'+r.mid+'</td><td class="num">'+r.tx+'</td>'+
+  '<tr><td><span class="stat '+r.st+'"><i></i>'+lab[r.st]+'</span></td>'+
+  '<td class="how">'+(r.how.length?r.how.map(h=>'<span class="ev '+(h==='RRN'?'rrn':'')+'">'+h+'</span>').join(''):'<span class="ev">no match</span>')+'</td>'+
+  '<td class="num">'+r.rrn+'</td><td class="nm2">'+r.store+'</td><td class="num">'+r.mid+'</td><td class="num">'+r.tx+'</td>'+
   '<td class="num">'+pretty(r.date)+'</td><td class="r num">'+(r.a==null?'':money(r.a))+'</td>'+
   '<td class="num">'+r.card+'</td><td class="num">'+r.auth+(r.st==='ok'&&!r.authOk&&r.sauth?'<div class="s">bank: '+r.sauth+'</div>':'')+'</td>'+
   '<td class="num">'+(r.sdate?pretty(r.sdate)+(r.bdate&&r.bdate!==r.sdate?'<div class="s">batch '+pretty(r.bdate)+'</div>':''):'')+'</td>'+
   '<td class="num">'+r.batch+'</td><td class="num">'+r.term+'</td><td class="r num">'+(r.net?money(r.net):'')+'</td></tr>').join('')
-  :'<tr><td colspan="14"><div class="empty">Nothing matches that filter.</div></td></tr>';
- $('foot').textContent=show.length>400?'Showing the first 400 of '+plain(show.length)+'. Download the file for the full list.':'';}
+  :'<tr><td colspan="14"><div class="empty">No flag matches these filters. Clear them to see everything again.</div></td></tr>';
+ $('foot').textContent=show.length>400
+  ? 'Showing the first 400 of '+plain(show.length)+'. Download the result for the full list.'
+  : (show.length?plain(show.length)+' of '+plain(RES.length)+' flag'+(RES.length===1?'':'s')+' shown.':'');}
+ $('lead').hidden=true;
 $('bDump').onclick=async()=>{
  const fs=Object.keys(DB[ch].files);
  if(!fs.length){alert('No '+CH[ch].name+' statements loaded yet. Add the files first.');return;}
@@ -673,12 +909,26 @@ $('bFix').onclick=()=>{
  XLSX.writeFile(wb,'Flag corrections '+CH[ch].name+' '+new Date().toISOString().slice(0,10)+'.xlsx');
  }catch(e){console.error(e);alert('Could not build the file. '+(e&&e.message?e.message:''));}};
 $('ffilt').onchange=drawFix;$('fq').oninput=drawFix;
-$('filt').onchange=draw;$('mfilt').onchange=draw;$('q').oninput=draw;
+$('mfilt').onchange=draw;$('q').oninput=draw;$('merch').onchange=draw;
+$('how').onchange=draw;$('minAmt').oninput=draw;
+document.querySelectorAll('.pill').forEach(p=>p.onclick=()=>{
+ FST[p.dataset.st]=!FST[p.dataset.st];
+ if(!FST.bad&&!FST.ok&&!FST.unk)FST={bad:true,ok:true,unk:true};
+ draw();});
+$('bClear').onclick=()=>{
+ FST={bad:true,ok:true,unk:true};
+ $('mfilt').value='all';$('merch').value='all';$('how').value='all';
+ $('minAmt').value='';$('q').value='';draw();};
+const fbar=$('fbar');
+if(window.IntersectionObserver&&fbar){
+ const sent=document.createElement('div');fbar.parentNode.insertBefore(sent,fbar);
+ new IntersectionObserver(([e])=>fbar.classList.toggle('stuck',!e.isIntersecting),{threshold:1})
+  .observe(sent);}
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));t.classList.add('on');
- ch=t.dataset.ch;document.documentElement.style.setProperty('--accent',CH[ch].accent);
+ ch=t.dataset.ch;
  brand(ch);
- $('q').value='';$('filt').value='all';if(!IX[ch])index(ch);paintA();paintB();paintC();
+ $('q').value='';if(!IX[ch])index(ch);paintTabs();paintA();paintB();paintC();
  if(FL[ch]&&IX[ch].count)run();else{$('res').hidden=true;$('gap').innerHTML='';}
  fixFlags();});
 function readDir(dr){return new Promise(res=>{
@@ -740,6 +990,29 @@ async function restore(file){
   lbl.textContent=orig;
   alert('Restored '+n+' statement file'+(n===1?'':'s')+' into '+CH[ch].name+'.');
  }catch(e){console.error(e);lbl.textContent=orig;alert('Could not restore that backup.\n\n'+why(e));}}
+function paintTabs(){
+ const n=c=>(IX[c]||{}).count||0;
+ $('dPos').textContent=n('pos')?plain(n('pos')):'';
+ $('dEcom').textContent=n('ecom')?plain(n('ecom')):'';
+ const fs=Object.keys(DB[ch].files).length,F=FL[ch],X=TX[ch];
+ $('srcsum').innerHTML=
+  '<span>Statements <b>'+(fs?plain(fs)+' file'+(fs===1?'':'s'):'none')+'</b></span>'+
+  '<span>Flags <b>'+(F?plain(F.rows.length):'none')+'</b></span>'+
+  '<span>Transactions <b>'+(X?plain(X.rows.length):'none')+'</b></span>';}
+function toggleSrc(open){
+ const b=$('srcbar');
+ const v=open===undefined?!b.classList.contains('open'):open;
+ b.classList.toggle('open',v);
+ $('srchead').setAttribute('aria-expanded',String(v));}
+$('srchead').onclick=()=>toggleSrc();
+$('srchead').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggleSrc();}};
+function setTheme(t){
+ document.documentElement.setAttribute('data-theme',t);
+ $('bTheme').textContent=t==='dark'?'Light':'Dark';
+ try{localStorage.setItem('rrntheme',t);}catch(_){}}
+$('bTheme').onclick=()=>setTheme(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark');
+(function(){let t=null;try{t=localStorage.getItem('rrntheme');}catch(_){}
+ setTheme(t|| (matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'));})();
 function wire(z,i,fn,multi){const Z=$(z),I=$(i);
  Z.onclick=()=>I.click();Z.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();I.click();}};
  I.onchange=e=>{if(e.target.files.length)fn(multi?e.target.files:e.target.files[0]);I.value='';};
@@ -751,14 +1024,15 @@ function wire(z,i,fn,multi){const Z=$(z),I=$(i);
   if(files.length)fn(files,hadDir);
   else alert('Nothing was found in what you dropped.');});}
 wire('zA','iA',addMS,true);wire('zB','iB',addFlags,false);wire('zC','iC',addTX,false);
+$('bFixDl').onclick=()=>$('bFix').click();
 $('bBackup').onclick=backup;
 $('bRestore').onclick=()=>$('iR').click();
 $('iR').onchange=e=>{if(e.target.files.length)restore(e.target.files[0]);e.target.value='';};
 $('bFolder').onclick=()=>$('iD').click();
 $('iD').onchange=e=>{if(e.target.files.length)addMS(e.target.files,true);e.target.value='';};
 function brand(c){
- const col=c==='pos'?'#B5651D':'#2E6E5B';
- const bg=document.getElementById('mkBg'), tk=document.getElementById('mkTick');
+ const col=getComputedStyle(document.documentElement).getPropertyValue('--ink').trim()||'#17222E';
+ const bg=document.getElementById('mkBg'),tk=document.getElementById('mkTick');
  if(bg)bg.setAttribute('fill',col); if(tk)tk.setAttribute('stroke',col);
  const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40">'+
   '<rect width="40" height="40" rx="9" fill="'+col+'"/>'+
@@ -773,8 +1047,7 @@ function brand(c){
  if(f)f.setAttribute('href','data:image/svg+xml,'+encodeURIComponent(svg));
 }
 brand('pos');
-document.documentElement.style.setProperty('--accent',CH.pos.accent);
 if(typeof XLSX==='undefined')alert('The spreadsheet engine failed to start. This copy of the page may be damaged.');
-load().then(()=>{index('pos');paintA();paintB();paintC();})
+load().then(()=>{index('pos');index('ecom');paintTabs();paintA();paintB();paintC();})
  .catch(e=>{console.error(e);alert('Could not open the saved data.\n\n'+why(e));});
 </script></body></html>
