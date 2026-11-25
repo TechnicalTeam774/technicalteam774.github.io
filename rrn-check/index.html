@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>RRN Check</title>
+<link rel="icon" id="fav" href="">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="vendor/xlsx.full.min.js"></script>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0);padding-bottom:env(safe-area-inset-bottom,0);
+--page:#F4F1EC;--card:#FFFDFA;--ink:#1A1713;--mut:#6F6A62;--line:#E0DAD0;--soft:#EFEBE4;--head:#231F1A;
+--pos:#B5651D;--ecom:#2E6E5B;--ok:#2E6E5B;--bad:#A33225;--warn:#8A6A18;
+--okbg:#E6F0EB;--badbg:#F7E9E6;--warnbg:#F6EFDD;--sh:0 1px 2px rgba(26,23,19,.05),0 2px 6px rgba(26,23,19,.05)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--page:#131110;--card:#1C1917;--ink:#EDE8E1;--mut:#9C958B;
+--line:#302B26;--soft:#221E1B;--head:#0D0B0A;--pos:#D9924E;--ecom:#6FBFA3;--ok:#6FBFA3;--bad:#E08A7C;--warn:#D4AF55;
+--okbg:#182A24;--badbg:#2B1C18;--warnbg:#2A2415;--sh:0 2px 6px rgba(0,0,0,.4)}}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--page);color:var(--ink);font-family:Sora,Arial,sans-serif;font-size:13.5px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.num{font-variant-numeric:tabular-nums}
+header{background:var(--head);color:#F2EDE6;padding:22px 24px 0}
+.hin{max-width:1300px;margin:0 auto}
+.brand{display:flex;align-items:center;gap:12px;margin-bottom:5px}
+.mark{width:34px;height:34px;flex:none}
+header h1{font-size:19px;font-weight:600;margin:0;letter-spacing:-.015em}
+header .tag{font-size:11px;color:#9C9388;letter-spacing:.14em;text-transform:uppercase;margin-top:1px}
+header p{margin:0 0 16px;font-size:12.5px;color:#A79D91;max-width:66ch}
+.tabs{display:flex;gap:4px}
+.tab{background:transparent;border:0;border-radius:7px 7px 0 0;padding:10px 20px;color:#A79D91;font:inherit;font-size:13px;font-weight:600;cursor:pointer;border-bottom:3px solid transparent}
+.tab:hover{color:#F2EDE6}.tab.on{background:var(--page);color:var(--ink)}
+.tab.on.pos{border-bottom-color:var(--pos)}.tab.on.ecom{border-bottom-color:var(--ecom)}
+.tab .d{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:8px;vertical-align:1px}
+.tab.pos .d{background:var(--pos)}.tab.ecom .d{background:var(--ecom)}
+main{max-width:1300px;margin:0 auto;padding:22px 24px 70px}
+@media(max-width:720px){header{padding:18px 14px 0}main{padding:18px 14px 50px}.tab{padding:10px 13px}}
+.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:1180px){.grid{grid-template-columns:1fr 1fr}}
+@media(max-width:780px){.grid{grid-template-columns:1fr}}
+.secth{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:26px 0 4px}
+.secth h2{font-size:16px;font-weight:600;margin:0}
+.secth .sub{font-size:12.5px;color:var(--mut)}
+.arrow{color:var(--mut);font-weight:700}
+td.was{color:var(--bad)}
+td.now{color:var(--ok);font-weight:600}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:10px;box-shadow:var(--sh);padding:18px}
+.ph{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:2px}
+.ph h2{font-size:14.5px;font-weight:600;margin:0}
+.ph .ct{font-size:11px;color:var(--mut);letter-spacing:.1em;text-transform:uppercase}
+.psub{color:var(--mut);font-size:12px;margin:0 0 13px}
+.zone{border:1.5px dashed var(--line);border-radius:8px;padding:19px 14px;text-align:center;color:var(--mut);font-size:12.5px;cursor:pointer;transition:.12s;background:var(--soft)}
+.zone:hover,.zone.on{border-color:var(--accent);color:var(--ink)}
+.zone b{display:block;color:var(--ink);font-weight:600;margin-bottom:3px;font-size:13px}
+.zone:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input[type=file]{display:none}
+.acts{margin-top:9px;display:flex;gap:7px;flex-wrap:wrap}
+.bar{height:3px;background:var(--line);border-radius:3px;overflow:hidden;margin-top:10px;display:none}
+.bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-top:13px}
+.kpi{background:var(--card);padding:10px 12px}
+.kpi .k{font-size:10.5px;color:var(--mut);letter-spacing:.07em;text-transform:uppercase}
+.kpi .v{font-size:16px;font-weight:600;letter-spacing:-.01em;margin-top:1px}
+.months{margin-top:13px;display:flex;flex-direction:column;gap:9px}
+.mo{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--soft)}
+.mo .mh{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px}
+.mo .mn{font-size:13px;font-weight:600}
+.mo .mc{font-size:11.5px;color:var(--mut)}
+.days{display:grid;grid-template-columns:repeat(31,1fr);gap:2px}
+.day{aspect-ratio:1;border-radius:3px;background:var(--line);position:relative;font-size:8px;display:flex;align-items:center;justify-content:center;color:transparent}
+.day.has{background:var(--ok);color:#fff;font-weight:600}
+.day.thin{background:var(--warn);color:#fff;font-weight:600}
+.day:hover::after{content:attr(data-t);position:absolute;bottom:135%;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--page);font-size:11px;padding:4px 8px;border-radius:5px;white-space:nowrap;z-index:9;font-weight:400}
+.flist{margin-top:12px;max-height:150px;overflow-y:auto;border:1px solid var(--line);border-radius:8px}
+.frow{display:flex;align-items:center;gap:10px;padding:7px 11px;border-bottom:1px solid var(--line);font-size:12px}
+.frow:last-child{border-bottom:0}
+.frow .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+.frow .mt{color:var(--mut);font-size:11px;white-space:nowrap}
+.frow .nm b{display:block;font-weight:600}
+.frow .nm span{display:block;color:var(--mut);font-size:10.5px;font-weight:400}
+.dlb{background:transparent;border:0;color:var(--mut);cursor:pointer;font-size:14px;line-height:1;padding:2px 5px;border-radius:4px}
+.dlb:hover{color:var(--ok);background:var(--okbg)}
+.fsearch{width:100%;margin-top:10px;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:7px;padding:7px 10px;font:inherit;font-size:12px}
+.hint{font-size:11px;color:var(--mut);margin-top:6px}
+.x{background:transparent;border:0;color:var(--mut);cursor:pointer;font-size:17px;line-height:1;padding:1px 5px;border-radius:4px}
+.x:hover{color:var(--bad);background:var(--badbg)}
+.alert{background:var(--warnbg);border:1px solid var(--warn);border-left-width:4px;border-radius:9px;padding:15px 17px;margin-top:18px}
+.alert h3{margin:0 0 5px;font-size:13.5px;font-weight:600;color:var(--warn)}
+.alert p{margin:0 0 9px;font-size:12.5px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{background:var(--card);border:1px solid var(--warn);border-radius:6px;padding:3px 9px;font-size:11.5px;font-weight:500}
+.bands{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:20px}
+@media(max-width:940px){.bands{grid-template-columns:1fr}}
+.band{border-radius:10px;padding:16px 18px;border:1px solid}
+.band.bad{background:var(--badbg);border-color:var(--bad)}
+.band.ok{background:var(--okbg);border-color:var(--ok)}
+.band.unk{background:var(--warnbg);border-color:var(--warn)}
+.band .n{font-size:30px;font-weight:700;letter-spacing:-.03em;line-height:1.05}
+.band.bad .n{color:var(--bad)}.band.ok .n{color:var(--ok)}.band.unk .n{color:var(--warn)}
+.band .t{font-weight:600;font-size:13px;margin-top:3px}
+.band .v{font-size:13.5px;font-weight:600;margin-top:6px}
+.band .dd{font-size:12px;color:var(--mut);margin-top:5px;line-height:1.45}
+.ctl{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:20px 0 11px}
+select,input[type=search]{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:7px;padding:9px 11px;font:inherit;font-size:12.5px}
+input[type=search]{flex:1;min-width:190px}
+button.btn{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:7px;padding:8px 14px;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer}
+button.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+button.btn:hover{filter:brightness(.97)}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.tw{border:1px solid var(--line);border-radius:10px;overflow:auto;max-height:600px;background:var(--card);box-shadow:var(--sh)}
+table{border-collapse:collapse;width:100%;font-size:12px;min-width:1180px}
+thead th{background:var(--soft);border-bottom:1px solid var(--line);color:var(--mut);font-weight:600;text-align:left;padding:10px 11px;position:sticky;top:0;white-space:nowrap;z-index:2;font-size:11px;letter-spacing:.04em;text-transform:uppercase}
+tbody td{padding:8px 11px;border-bottom:1px solid var(--line);white-space:nowrap;vertical-align:top}
+tbody tr:hover td{background:var(--soft)}
+td.r{text-align:right}
+.pill{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:11.5px}
+.pill i{width:8px;height:8px;border-radius:50%;display:block}
+.pill.ok{color:var(--ok)}.pill.ok i{background:var(--ok)}
+.pill.bad{color:var(--bad)}.pill.bad i{background:var(--bad)}
+.pill.unk{color:var(--warn)}.pill.unk i{background:var(--warn)}
+.ev{display:inline-block;background:var(--soft);border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-size:10px;color:var(--mut);margin-right:3px;font-weight:600}
+.ev.rrn{background:var(--ok);border-color:var(--ok);color:#fff}
+.ev.y{background:var(--okbg);border-color:var(--ok);color:var(--ok)}
+.s{color:var(--mut);font-size:10.5px}
+.empty{padding:46px 20px;text-align:center;color:var(--mut)}
+.foot{margin-top:12px;font-size:12px;color:var(--mut)}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style></head><body>
+
+<header><div class="hin">
+<div class="brand">
+<svg class="mark" viewBox="0 0 40 40" aria-hidden="true">
+<rect id="mkBg" width="40" height="40" rx="9" fill="#B5651D"/>
+<g fill="#FFFDFA">
+<rect x="7.5" y="8.5" width="2.8" height="23" rx="1.4"/>
+<rect x="13" y="8.5" width="1.6" height="23" rx=".8"/>
+<rect x="17.3" y="8.5" width="3.4" height="23" rx="1.7"/>
+<rect x="23.4" y="8.5" width="1.6" height="23" rx=".8"/>
+<rect x="27.8" y="8.5" width="2.8" height="23" rx="1.4"/>
+</g>
+<circle cx="29.6" cy="29.6" r="8.1" fill="#FFFDFA"/>
+<path id="mkTick" d="M25.9 29.7l2.7 2.7 4.7-5.2" stroke="#B5651D" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+<div><h1>RRN Check</h1><div class="tag">Settlement verification</div></div>
+</div>
+<p>Matched on RRN first, the one reference that never repeats. Load the bank's merchant statements once, then drop in a flags file. Add your own transaction export to find the correct transaction behind each flag.</p>
+<div class="tabs">
+<button class="tab pos on" data-ch="pos"><span class="d"></span>POS</button>
+<button class="tab ecom" data-ch="ecom"><span class="d"></span>E-Commerce</button>
+</div></div></header>
+
+<main>
+<div class="grid">
+  <section class="panel">
+    <div class="ph"><h2>Merchant statements</h2><span class="ct" id="ctA"></span></div>
+    <p class="psub" id="subA">What the bank says it settled. Saved in this browser, exactly as you loaded it. Only files with <b>Tool</b> in the name are taken from a folder.</p>
+    <div class="zone" id="zA" tabindex="0" role="button"><b>Add statement files or folders</b>Drop as many folders as you like at once, or click to pick files.</div>
+    <input type="file" id="iA" multiple accept=".xlsx,.xls,.csv">
+    <input type="file" id="iD" webkitdirectory directory multiple>
+    <div class="acts">
+      <button class="btn" id="bFolder" type="button" title="Pick the folder that contains your month folders – everything inside is read">Add a folder</button>
+      <button class="btn" id="bDump" type="button">Download statements</button>
+      <button class="btn" id="bBackup" type="button" title="Save every loaded statement into one file, so you can move them to another computer or to the shared version">Back up statements</button>
+      <button class="btn" id="bRestore" type="button" title="Load statements back from a backup file">Restore backup</button>
+      <input type="file" id="iR" accept=".rrnbak,.json" hidden>
+    </div>
+    <div class="hint">Browsers only allow one folder per dialog. Pick the folder that holds your month folders and everything inside is read, or drag several folders onto the box above. Files always add to what is already there.</div>
+    <div class="bar" id="bar"><i></i></div>
+    <div class="hint" id="addmsg"></div>
+    <div id="kA"></div><div id="mA"></div><div id="lA"></div>
+  </section>
+
+  <section class="panel">
+    <div class="ph"><h2>Flags</h2><span class="ct" id="ctB"></span></div>
+    <p class="psub">Transactions your system still shows as unsettled.</p>
+    <div class="zone" id="zB" tabindex="0" role="button"><b>Add a flags file</b>Drop it here or click.</div>
+    <input type="file" id="iB" accept=".xlsx,.xls,.csv">
+    <div class="acts"><button class="btn" id="bFlags" type="button">Download flags</button></div>
+    <div id="kB"></div><div id="mB"></div><div id="lB"></div>
+  </section>
+
+  <section class="panel">
+    <div class="ph"><h2>Kashier transactions</h2><span class="ct" id="ctC"></span></div>
+    <p class="psub">Your own transaction export, used to find the correct transaction behind each RRN.</p>
+    <div class="zone" id="zC" tabindex="0" role="button"><b>Add a transactions file</b>Drop it here or click.</div>
+    <input type="file" id="iC" accept=".xlsx,.xls,.csv">
+    <div class="acts"><button class="btn" id="bFix" type="button">Download corrections</button></div>
+    <div id="kC"></div><div id="lC"></div>
+  </section>
+</div>
+
+<div id="fixwrap" hidden>
+  <div class="secth"><h2>Flag corrections</h2><span class="sub" id="fixsub"></span></div>
+  <div class="ctl">
+    <select id="ffilt"><option value="all">All flags</option><option value="diff">Wrong transaction only</option><option value="same">Already correct</option><option value="none">RRN not found</option></select>
+    <input type="search" id="fq" placeholder="Search RRN, store, merchant, transaction ID">
+  </div>
+  <div class="tw"><table><thead><tr>
+    <th>RRN</th><th>Status</th>
+    <th>Flag – Transaction ID</th><th>Flag – MID</th><th>Flag – Store Name</th>
+    <th></th>
+    <th>Correct – Transaction ID</th><th>Correct – MID</th><th>Correct – Store Name</th>
+    <th class="r">Amount</th><th>Date</th>
+  </tr></thead><tbody id="ftb"></tbody></table></div>
+  <p class="foot" id="ffoot"></p>
+</div>
+
+<div id="gap"></div>
+<div id="res" hidden>
+  <div class="bands" id="bands"></div>
+  <div class="ctl">
+    <select id="filt"><option value="all">All transactions</option><option value="bad">Still owed to us</option><option value="ok">Already settled</option><option value="unk">No statement loaded</option></select>
+    <select id="mfilt"><option value="all">All months</option></select>
+    <input type="search" id="q" placeholder="Search RRN, merchant, card, amount">
+    <button class="btn pri" id="dl">Download result</button>
+  </div>
+  <div class="tw"><table><thead><tr>
+    <th>Status</th><th>Matched on</th><th>RRN</th><th>Merchant</th><th>Merchant no.</th>
+    <th>Transaction ID</th><th>Flag date</th><th class="r">Amount</th><th>Card</th><th>Auth</th>
+    <th>Settled on</th><th>Batch</th><th>Terminal</th><th class="r">Settled net</th>
+  </tr></thead><tbody id="tb"></tbody></table></div>
+  <p class="foot" id="foot"></p>
+</div>
+</main>
+
+<script>
+const $=i=>document.getElementById(i);
+const CH={pos:{name:'POS',accent:'var(--pos)'},ecom:{name:'E-Commerce',accent:'var(--ecom)'}};
+let ch='pos', DB={pos:{files:{}},ecom:{files:{}}}, IX={pos:null,ecom:null}, FL={pos:null,ecom:null}, TX={pos:null,ecom:null}, RES=[], CORR=[];
+const norm=v=>String(v==null?'':v).trim();
+const dig=v=>norm(v).replace(/\D/g,'');
+const l4=v=>dig(v).slice(-4), f6=v=>dig(v).slice(0,6);
+const amt=v=>{const n=parseFloat(String(v).replace(/,/g,''));return isNaN(n)?null:Math.round(n*100)/100;};
+const money=n=>(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const plain=n=>(n||0).toLocaleString('en-US');
+const clean=s=>norm(s).toUpperCase().replace(/^KASHIER\s*\*?\s*/,'').replace(/[^A-Z0-9]/g,'');
+function col(row,names){const ks=Object.keys(row);
+ for(const n of names){const k=ks.find(k=>k.trim().toLowerCase()===n);if(k)return row[k];}
+ for(const n of names){const k=ks.find(k=>k.trim().toLowerCase().replace(/[_\s]+/g,' ')===n);if(k)return row[k];}
+ for(const n of names){const k=ks.find(k=>k.trim().toLowerCase().includes(n));if(k)return row[k];}return '';}
+function mapCols(keys,spec){
+ const m={},low=keys.map(k=>String(k).trim().toLowerCase()),flat=low.map(k=>k.replace(/[_\s]+/g,' '));
+ for(const f in spec){let i=-1;
+  for(const n of spec[f]){i=low.indexOf(n);if(i>=0)break;}
+  if(i<0)for(const n of spec[f]){i=flat.indexOf(n);if(i>=0)break;}
+  if(i<0)for(const n of spec[f]){i=low.findIndex(k=>k.includes(n));if(i>=0)break;}
+  if(i>=0)m[f]=keys[i];}
+ return m;}
+const MS_SPEC={mid:['merchant number','merchant no'],card:['card number','card holder no'],
+ amt:['transaction_amount','transaction amount'],date:['transaction_date','transaction date'],
+ rrn:['reference_number','reference number','rrn'],auth:['authorization_code','authorization code'],
+ batch:['batch number','transaction batch'],term:['terminal_id','terminal id','tid'],
+ name:['merchant name'],net:['net_amount','net value','net amount'],
+ bdate:['batch_date','batch date','statement date']};
+const FL_SPEC={mid:['merchant number'],store:['store name','merchant name'],mi:['merchant id'],
+ tx:['transaction id'],date:['date'],amt:['amount'],card:['card number'],
+ rrn:['rrn','reference_number'],auth:['gateway transaction reference','authorization']};
+const TX_SPEC={rrn:['rrn','reference number','reference_number'],tx:['transaction id'],
+ mi:['merchant id'],store:['store name','merchant name'],amt:['amount'],date:['date'],
+ card:['card number'],status:['status']};
+const _iso=new Map();
+function isoC(v){const k=typeof v==='object'?String(v):v;
+ if(_iso.has(k))return _iso.get(k);const r=iso(v);if(_iso.size<60000)_iso.set(k,r);return r;}
+function iso(v){if(v==null||v==='')return '';
+ if(typeof v==='number'){const d=new Date(Date.UTC(1899,11,30)+v*864e5);return isNaN(d)?'':d.toISOString().slice(0,10);}
+ if(v instanceof Date)return isNaN(v)?'':v.toISOString().slice(0,10);
+ const s=String(v).trim();let m=s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/);
+ if(m)return m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');
+ m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);if(m)return m[0];
+ const d=new Date(s);return isNaN(d)?'':d.toISOString().slice(0,10);}
+const MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MF=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const pretty=d=>{if(!d)return '';const p=String(d).split('-');return p.length<3?d:p[2]+' '+MN[+p[1]-1]+' '+p[0];};
+function why(e){
+ var n=(e&&e.name)||'', m=(e&&e.message)||String(e||'');
+ if(typeof XLSX==='undefined')
+  return 'The spreadsheet engine is not loaded. Reload the page.';
+ if(n==='NotReadableError'||/could not be read|permission problems/i.test(m))
+  return 'Windows would not hand the file over. It is almost always still open in Excel — close it there, then try again.';
+ if(n==='NotFoundError'||/not found/i.test(m))
+  return 'The file was moved, renamed or deleted after you picked it. Pick it again.';
+ if(n==='QuotaExceededError'||/quota/i.test(m))
+  return 'This browser has run out of storage for the tool. Remove some statement files, then try again.';
+ if(n==='RangeError'||/allocation failed|out of memory|Invalid (string|array) length/i.test(m))
+  return 'The browser ran out of memory. Remove some statement files from the list, then try again.';
+ if(/password|encrypt/i.test(m))
+  return 'The file is password protected. Remove the password in Excel and save it again.';
+ if(/zip|corrupt|unsupported|Cannot find file/i.test(m))
+  return 'This is not a readable spreadsheet. If a system exported it, open it in Excel and Save As .xlsx.';
+ return (n?n+': ':'')+m;}
+function readFail(file,e,lbl,fallback){
+ try{console.error('read failed:',file&&file.name,e);}catch(_){}
+ if(lbl)lbl.textContent=fallback;
+ alert('Could not read '+(file&&file.name?file.name:'the file')+'\n\n'+why(e));}
+async function read(f){const b=await f.arrayBuffer();const wb=XLSX.read(b,{type:'array',cellDates:true});
+ const ws=wb.Sheets[wb.SheetNames[0]];
+ const hdr=(XLSX.utils.sheet_to_json(ws,{header:1,defval:''})[0]||[]).map(x=>String(x).trim()).filter(Boolean);
+ return {hdr,rows:XLSX.utils.sheet_to_json(ws,{defval:''})};}
+function idb(mode,store,fn){return new Promise((res,rej)=>{const r=indexedDB.open('rrncheck',2);
+ r.onupgradeneeded=e=>{const d=e.target.result;
+  if(!d.objectStoreNames.contains('s'))d.createObjectStore('s');
+  if(!d.objectStoreNames.contains('raw'))d.createObjectStore('raw');};
+ r.onsuccess=e=>{let t;try{t=e.target.result.transaction(store,mode);}catch(err){rej(err);return;}
+  const o=t.objectStore(store),q=fn(o);
+  t.oncomplete=()=>res(q&&q.result);t.onerror=()=>rej(t.error);t.onabort=()=>rej(t.error);};
+ r.onerror=()=>rej(r.error);});}
+const rk=(c,n)=>c+'|'+n;
+const putRaw=(c,n,rows)=>idb('readwrite','raw',o=>o.put(rows,rk(c,n)));
+const getRaw=(c,n)=>idb('readonly','raw',o=>o.get(rk(c,n)));
+const dropRaw=(c,n)=>idb('readwrite','raw',o=>o.delete(rk(c,n)));
+const save=()=>idb('readwrite','s',o=>o.put(DB,'db'))
+ .catch(e=>{console.error('save failed',e);alert('Could not save to this browser.\n\n'+why(e));});
+/* v1 kept every raw row in the same record as the file list, which is what made
+   the tab heavy. Move them into their own store once, on first open. */
+async function load(){
+ let v;try{v=await idb('readonly','s',o=>o.get('db'));}catch(e){console.error(e);return;}
+ if(!(v&&v.pos&&v.ecom))return;
+ let moved=0;
+ for(const c of ['pos','ecom']){
+  for(const n in v[c].files){
+   const F=v[c].files[n];if(!F)continue;
+   if(F.rows){
+    try{await putRaw(c,n,F.rows);}catch(e){console.error('migrate',n,e);}
+    v[c].files[n]={hdr:F.hdr||[],n:F.rows.length,ix:compact(F.rows)};
+    F.rows=null;moved++;
+    await new Promise(r=>setTimeout(r,0));}
+   else if(!F.ix){v[c].files[n]={hdr:F.hdr||[],n:F.n||0,ix:[]};}}}
+ DB=v;
+ if(moved){try{await idb('readwrite','s',o=>o.put(DB,'db'));}catch(e){console.error(e);}}}
+
+/* Same field order and same rules as before — only lifted out of index()
+   so it runs once per file at load time instead of over raw rows each time. */
+function compact(rows){
+ const out=[];if(!rows||!rows.length)return out;
+ const M=mapCols(Object.keys(rows[0]),MS_SPEC);
+ const kM=M.mid,kC=M.card,kA=M.amt,kD=M.date,kR=M.rrn,kU=M.auth,kB=M.batch,kT=M.term,kN=M.name,kNet=M.net,kBD=M.bdate;
+ for(let i=0;i<rows.length;i++){const r=rows[i];
+  const mid=kM?dig(r[kM]):''; const card=kC?r[kC]:''; const a=kA?amt(r[kA]):null;
+  if(!mid||!card||a==null)continue;
+  out.push([mid,f6(card),l4(card),a,
+   kU?dig(r[kU]).padStart(6,'0'):'',kB?norm(r[kB]):'',kT?norm(r[kT]):'',
+   kN?clean(r[kN]):'',kD?isoC(r[kD]):'',kNet?(amt(r[kNet])||0):0,kBD?isoC(r[kBD]):'',kR?dig(r[kR]):'']);}
+ return out;}
+function index(c){
+ const out={rows:[],dates:{},count:0,value:0,rrn:0,meta:{}};
+ for(const fn in DB[c].files){
+  const F=DB[c].files[fn]||{},ix=F.ix||[];
+  if(!ix.length){out.meta[fn]={n:F.n||0,from:'',to:''};continue;}
+  let fmin='',fmax='';
+  for(let i=0;i<ix.length;i++){const r=ix[i];
+   if(r[11])out.rrn++;
+   out.rows.push(r);
+   const d=r[8];
+   if(d){out.dates[d]=(out.dates[d]||0)+1; if(!fmin||d<fmin)fmin=d; if(!fmax||d>fmax)fmax=d;}
+   out.count++; out.value+=r[3];}
+  out.meta[fn]={n:F.n||ix.length,from:fmin,to:fmax};}
+ IX[c]=out; return out;}
+function memNote(){
+ try{
+  var p=performance&&performance.memory;if(!p||!p.usedJSHeapSize)return '';
+  var gb=p.usedJSHeapSize/1073741824,lim=p.jsHeapSizeLimit/1073741824;
+  var pct=lim?Math.round(gb/lim*100):0;
+  var t=' Memory '+gb.toFixed(2)+' GB of '+lim.toFixed(1)+' GB ('+pct+'%).';
+  if(pct>=80)t+=' Close to the limit — remove some files before adding more.';
+  return t;
+ }catch(_){return '';}}
+function kpis(id,arr){$(id).innerHTML='<div class="kpis">'+arr.map(a=>'<div class="kpi"><div class="k">'+a[0]+'</div><div class="v num">'+a[1]+'</div></div>').join('')+'</div>';}
+function monthView(dates){
+ const byM={};
+ for(const d in dates){const k=d.slice(0,7);(byM[k]=byM[k]||{})[+d.slice(8,10)]=dates[d];}
+ const keys=Object.keys(byM).sort();
+ if(!keys.length)return '';
+ return '<div class="months">'+keys.map(k=>{
+  const [y,m]=k.split('-'), dim=new Date(+y,+m,0).getDate(), days=byM[k];
+  let have=0,thin=0,cells='';
+  for(let i=1;i<=dim;i++){
+   const c=days[i]||0, cl=c>400?'has':(c>0?'thin':'');
+   if(c>400)have++;else if(c)thin++;
+   cells+='<div class="day '+cl+'" data-t="'+i+' '+MN[+m-1]+' '+y+(c?' \u00b7 '+plain(c)+' rows':' \u00b7 nothing loaded')+'">'+i+'</div>';}
+  for(let i=dim;i<31;i++)cells+='<div style="visibility:hidden"></div>';
+  return '<div class="mo"><div class="mh"><span class="mn">'+MF[+m-1]+' '+y+'</span><span class="mc num">'+
+    have+' of '+dim+' days'+(thin?' \u00b7 '+thin+' partial':'')+'</span></div><div class="days">'+cells+'</div></div>';
+ }).join('')+'</div>';}
+function paintA(){
+ const fs=Object.keys(DB[ch].files); $('ctA').textContent=CH[ch].name;
+ if(!fs.length){IX[ch]={rows:[],dates:{},count:0,value:0,rrn:0};$('kA').innerHTML='';$('mA').innerHTML='';$('lA').innerHTML='';return;}
+ const X=IX[ch]||index(ch);
+ kpis('kA',[['Files',plain(fs.length)],['Transactions',plain(X.count)],
+  ['Total value','EGP '+money(X.value)],['With an RRN',plain(X.rrn)]]);
+ $('mA').innerHTML=monthView(X.dates);
+ drawFiles();}
+function drawFiles(){
+ const fs=Object.keys(DB[ch].files).sort(); if(!fs.length){$('lA').innerHTML='';return;}
+ const q=(window._fq||'').trim().toLowerCase();
+ const show=q?fs.filter(f=>f.toLowerCase().includes(q)):fs;
+ const meta=(IX[ch]&&IX[ch].meta)||{};
+ $('lA').innerHTML='<input class="fsearch" id="fsq" type="search" placeholder="Find a statement by name" value="'+(window._fq||'').replace(/"/g,'&quot;')+'">'+
+  '<div class="flist">'+(show.length?show.map(f=>{
+   const m=meta[f]||{},rng=m.from?(m.from===m.to?pretty(m.from):pretty(m.from)+' \u2013 '+pretty(m.to)):'';
+   return '<div class="frow"><span class="nm"><b>'+f+'</b>'+(rng?'<span>'+rng+'</span>':'')+'</span>'+
+    '<span class="mt num">'+plain(m.n||DB[ch].files[f].rows.length)+'</span>'+
+    '<button class="dlb" data-f="'+encodeURIComponent(f)+'" title="Download this statement">&#8681;</button>'+
+    '<button class="x" data-f="'+encodeURIComponent(f)+'" title="Remove">&times;</button></div>';}).join('')
+   :'<div class="frow"><span class="nm" style="color:var(--mut)">Nothing matches that name.</span></div>')+'</div>'+
+  '<div class="hint">'+plain(fs.length)+' statement file'+(fs.length>1?'s':'')+' loaded.'+memNote()+' Use \u2193 to download one on its own.</div>';
+ const si=$('fsq');
+ if(si){si.oninput=()=>{window._fq=si.value;drawFiles();setTimeout(()=>{const n=$('fsq');if(n){n.focus();n.setSelectionRange(n.value.length,n.value.length);}},0);};}
+ $('lA').querySelectorAll('.x').forEach(b=>b.onclick=()=>delFile(decodeURIComponent(b.dataset.f)));
+ $('lA').querySelectorAll('.dlb').forEach(b=>b.onclick=()=>dlOne(decodeURIComponent(b.dataset.f)));}
+async function dlOne(name){
+ const F=DB[ch].files[name];if(!F){alert('That file is not loaded.');return;}
+ try{
+  const rows=await getRaw(ch,name);
+  if(!rows||!rows.length){alert('That file has no rows.');return;}
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows,F.hdr&&F.hdr.length?{header:F.hdr}:{}),'Sheet1');
+  XLSX.writeFile(wb,name.replace(/\.(xlsx|xls|csv)$/i,'')+'.xlsx');
+ }catch(e){console.error(e);alert('Could not build the file.\n\n'+why(e));}}
+function paintB(){
+ const F=FL[ch];$('ctB').textContent=CH[ch].name;
+ if(!F){$('kB').innerHTML='';$('mB').innerHTML='';$('lB').innerHTML='';return;}
+ const ds=F.parsed.map(r=>r.date).filter(Boolean).sort();
+ const withR=F.parsed.filter(r=>r.rrn).length;
+ kpis('kB',[['Transactions',plain(F.parsed.length)],['Total value','EGP '+money(F.parsed.reduce((s,r)=>s+(r.a||0),0))],
+  ['With an RRN',plain(withR)],['Period',ds.length?pretty(ds[0])+' \u2013 '+pretty(ds[ds.length-1]):'\u2014']]);
+ const cnt={};for(const r of F.parsed)if(r.date)cnt[r.date]=(cnt[r.date]||0)+1;
+ $('mB').innerHTML=monthView(cnt);
+ $('lB').innerHTML='<div class="flist"><div class="frow"><span class="nm">'+F.name+'</span><span class="mt num">'+plain(F.rows.length)+'</span><button class="x" id="xf" title="Remove">&times;</button></div></div>';
+ $('xf').onclick=()=>{FL[ch]=null;RES=[];paintB();$('res').hidden=true;$('gap').innerHTML='';};}
+async function delFile(name){
+ if(!DB[ch].files[name]||!confirm('Remove "'+name+'"?'))return;
+ delete DB[ch].files[name]; try{await dropRaw(ch,name);}catch(e){console.error(e);}
+ index(ch); paintA(); if(FL[ch])run(); save();}
+async function addMS(files,onlyTool){
+ let list=Array.from(files).filter(f=>/\.(xlsx|xls|csv)$/i.test(f.name));
+ if(onlyTool){
+  const t=list.filter(f=>/tool/i.test(f.name));
+  if(!t.length){alert(list.length?('Found '+list.length+' spreadsheet file(s), but none has "Tool" in the name.'):'No spreadsheet files were found in that folder.');return;}
+  list=t;}
+ if(!list.length){alert('No spreadsheet files were found. Drop the folders themselves, or pick the files directly.');return;}
+ const bar=$('bar'),lbl=$('subA'),orig=lbl.textContent;bar.style.display='block';
+ let i=0,added=0,skipped=0;const failed=[];
+ for(const file of list){
+  lbl.textContent='Reading '+file.name+'  \u00b7  '+(i+1)+' of '+list.length;
+  if(DB[ch].files[file.name]){skipped++;}
+  else{try{const {hdr,rows}=await read(file);
+    const ix=compact(rows);
+    await putRaw(ch,file.name,rows);
+    DB[ch].files[file.name]={hdr,n:rows.length,ix};
+    added++;}catch(e){console.error(file.name,e);failed.push(file.name+' — '+why(e));}}
+  i++;bar.firstElementChild.style.width=(i/list.length*100)+'%';
+  await new Promise(r=>requestAnimationFrame(()=>setTimeout(r,0)));}
+ lbl.textContent='Indexing \u2026';
+ await new Promise(r=>setTimeout(r,20));
+ index(ch); paintA(); if(FL[ch])run();
+ const total=Object.keys(DB[ch].files).length;
+ $('addmsg').textContent=added?('Added '+added+' file'+(added>1?'s':'')+(skipped?', '+skipped+' already loaded':'')+'. '+total+' in total.')
+   :(skipped?'Those '+skipped+' file'+(skipped>1?'s were':' was')+' already loaded. '+total+' in total.':'');
+ if(failed.length)alert(failed.length+' file'+(failed.length>1?'s':'')+' could not be read:\n\n'+failed.slice(0,8).join('\n')+(failed.length>8?'\n\u2026and '+(failed.length-8)+' more.':''));
+ lbl.textContent='Saving to this browser \u2026';
+ save().then(()=>{lbl.textContent=orig;});
+ setTimeout(()=>{bar.style.display='none';bar.firstElementChild.style.width='0';},350);}
+async function addFlags(file){
+ const lbl=$('ctB'); lbl.textContent='Reading \u2026';
+ let d;try{d=await read(file);}catch(e){readFail(file,e,lbl,CH[ch].name);return;}
+ const M=d.rows.length?mapCols(Object.keys(d.rows[0]),FL_SPEC):{};
+ FL[ch]={name:file.name,hdr:d.hdr,rows:d.rows,
+  parsed:d.rows.map((r,i)=>({i,mid:M.mid?dig(r[M.mid]):'',store:M.store?norm(r[M.store]):'',
+   mi:M.mi?norm(r[M.mi]):'',tx:M.tx?norm(r[M.tx]):'',date:M.date?isoC(r[M.date]):'',
+   a:M.amt?amt(r[M.amt]):null,card:M.card?norm(r[M.card]):'',rrn:M.rrn?dig(r[M.rrn]):'',
+   auth:M.auth?norm(r[M.auth]):''}))};
+ paintB();run();}
+async function addTX(file){
+ const lbl=$('ctC'); lbl.textContent='Reading \u2026';
+ let d;try{d=await read(file);}catch(e){readFail(file,e,lbl,CH[ch].name);return;}
+ const M=d.rows.length?mapCols(Object.keys(d.rows[0]),TX_SPEC):{};
+ TX[ch]={name:file.name,hdr:d.hdr,rows:d.rows,
+  parsed:d.rows.map(r=>({rrn:M.rrn?dig(r[M.rrn]):'',tx:M.tx?norm(r[M.tx]):'',
+   mid:M.mi?norm(r[M.mi]):'',store:M.store?norm(r[M.store]):'',
+   a:M.amt?amt(r[M.amt]):null,date:M.date?isoC(r[M.date]):'',
+   card:M.card?norm(r[M.card]):'',status:M.status?norm(r[M.status]):''}))};
+ paintC();fixFlags();}
+function paintC(){
+ const X=TX[ch];$('ctC').textContent=CH[ch].name;
+ if(!X){$('kC').innerHTML='';$('lC').innerHTML='';$('fixwrap').hidden=true;return;}
+ const wr=X.parsed.filter(r=>r.rrn).length;
+ kpis('kC',[['Transactions',plain(X.parsed.length)],['With an RRN',plain(wr)],
+  ['Distinct RRNs',plain(new Set(X.parsed.filter(r=>r.rrn).map(r=>r.rrn)).size)],
+  ['Merchants',plain(new Set(X.parsed.map(r=>r.mid).filter(Boolean)).size)]]);
+ $('lC').innerHTML='<div class="flist"><div class="frow"><span class="nm">'+X.name+'</span><span class="mt num">'+plain(X.rows.length)+'</span><button class="x" id="xc" title="Remove">&times;</button></div></div>';
+ $('xc').onclick=()=>{TX[ch]=null;CORR=[];paintC();};}
+function fixFlags(){
+ const F=FL[ch],X=TX[ch];
+ if(!F||!X){$('fixwrap').hidden=true;return;}
+ const byRRN=new Map();
+ for(const t of X.parsed){ if(!t.rrn)continue;
+   const cur=byRRN.get(t.rrn);
+   if(!cur||(cur.status!=='Approved'&&t.status==='Approved')) byRRN.set(t.rrn,t); }
+ CORR=F.parsed.map(f=>{
+  const t=f.rrn?byRRN.get(f.rrn):null;
+  let st='none';
+  if(t) st=(norm(t.tx)===norm(f.tx))?'same':'diff';
+  return{rrn:f.rrn,st,ftx:f.tx,fmid:f.mi,fstore:f.store,fa:f.a,fdate:f.date,
+   ctx:t?t.tx:'',cmid:t?t.mid:'',cstore:t?t.store:'',ca:t?t.a:null,cdate:t?t.date:''};});
+ const d=CORR.filter(r=>r.st==='diff').length,s=CORR.filter(r=>r.st==='same').length,n=CORR.filter(r=>r.st==='none').length;
+ $('fixsub').textContent=plain(d)+' pointing at the wrong transaction \u00b7 '+plain(s)+' already correct \u00b7 '+plain(n)+' with no matching RRN';
+ $('fixwrap').hidden=false;drawFix();}
+function drawFix(){
+ const f=$('ffilt').value,q=$('fq').value.trim().toLowerCase();
+ const show=CORR.filter(r=>(f==='all'||r.st===f)&&(!q||[r.rrn,r.ftx,r.fmid,r.fstore,r.ctx,r.cmid,r.cstore].join(' ').toLowerCase().includes(q)));
+ const lab={diff:'Wrong',same:'Correct',none:'Not found'};
+ const cls={diff:'bad',same:'ok',none:'unk'};
+ $('ftb').innerHTML=show.length?show.slice(0,400).map(r=>
+  '<tr><td class="num">'+r.rrn+'</td>'+
+  '<td><span class="pill '+cls[r.st]+'"><i></i>'+lab[r.st]+'</span></td>'+
+  '<td class="num '+(r.st==='diff'?'was':'')+'">'+r.ftx+'</td><td class="num">'+r.fmid+'</td><td>'+r.fstore+'</td>'+
+  '<td class="arrow">&rarr;</td>'+
+  '<td class="num '+(r.st==='diff'?'now':'')+'">'+r.ctx+'</td><td class="num">'+r.cmid+'</td><td>'+r.cstore+'</td>'+
+  '<td class="r num">'+(r.ca==null?'':money(r.ca))+'</td><td class="num">'+pretty(r.cdate)+'</td></tr>').join('')
+  :'<tr><td colspan="11"><div class="empty">Nothing matches that filter.</div></td></tr>';
+ $('ffoot').textContent=show.length>400?'Showing the first 400 of '+plain(show.length)+'. Download the file for the full list.':'';}
+function run(){
+ const F=FL[ch];if(!F)return;
+ const X=IX[ch]||index(ch);
+ if(!X.rows.length){alert('Load the '+CH[ch].name+' merchant statements first.');return;}
+ const byRRN=new Map(),byMid=new Map(),byName=new Map();
+ for(const r of X.rows){
+   if(r[11])byRRN.set(r[11],r);
+   byMid.set(r[0]+'|'+r[1]+'|'+r[2]+'|'+r[3],r);
+   if(r[7])byName.set(r[7]+'|'+r[1]+'|'+r[2]+'|'+r[3],r);}
+ const solid=new Set(Object.keys(X.dates).filter(d=>X.dates[d]>400));
+ RES=F.parsed.map(f=>{
+  const key=f6(f.card)+'|'+l4(f.card)+'|'+f.a;
+  let hit=null,how=[];
+  if(f.rrn&&byRRN.has(f.rrn)){hit=byRRN.get(f.rrn);how=['RRN'];
+    if(hit[3]===f.a)how.push('amount'); if(hit[2]===l4(f.card))how.push('card');}
+  if(!hit){hit=byMid.get(f.mid+'|'+key);if(hit)how=['merchant no.','card','amount'];}
+  if(!hit){hit=byName.get(clean(f.store)+'|'+key);if(hit)how=['merchant name','card','amount'];}
+  const authOk=hit&&dig(f.auth).padStart(6,'0')===hit[4];
+  if(hit&&authOk&&!how.includes('auth code'))how.push('auth code');
+  return{...f,st:hit?'ok':(solid.has(f.date)?'bad':'unk'),how,authOk:!!authOk,byRRN:!!(hit&&how[0]==='RRN'),
+   sdate:hit?hit[8]:'',bdate:hit?hit[10]:'',batch:hit?hit[5]:'',term:hit?hit[6]:'',
+   net:hit?hit[9]:null,sauth:hit?hit[4]:'',srrn:hit?hit[11]:''};});
+ const ms=[...new Set(RES.map(r=>r.date&&r.date.slice(0,7)).filter(Boolean))].sort();
+ $('mfilt').innerHTML='<option value="all">All months</option>'+ms.map(m=>'<option value="'+m+'">'+MF[+m.slice(5,7)-1]+' '+m.slice(0,4)+'</option>').join('');
+ gaps();draw();$('res').hidden=false;}
+function gaps(){
+ const need={};
+ for(const r of RES)if(r.st==='unk'&&r.date)need[r.date]=(need[r.date]||0)+(r.a||0);
+ const ks=Object.keys(need).sort();
+ if(!ks.length){$('gap').innerHTML='';return;}
+ const tot=ks.reduce((s,k)=>s+need[k],0);
+ $('gap').innerHTML='<div class="alert"><h3>'+ks.length+' date'+(ks.length>1?'s':'')+' cannot be checked yet</h3>'+
+  '<p>No merchant statement is loaded for these dates, so EGP '+money(tot)+' is still undecided. Add the statement files for them and the result updates on its own.</p>'+
+  '<div class="chips">'+ks.map(k=>'<span class="chip">'+pretty(k)+' <b class="num">'+money(need[k])+'</b></span>').join('')+'</div></div>';}
+function draw(){
+ const f=$('filt').value,mf=$('mfilt').value,q=$('q').value.trim().toLowerCase();
+ const base=mf==='all'?RES:RES.filter(r=>r.date&&r.date.slice(0,7)===mf);
+ const sum=c=>{const x=base.filter(r=>r.st===c);return[x.length,x.reduce((s,r)=>s+(r.a||0),0)];};
+ const [on,oa]=sum('ok'),[bn,ba]=sum('bad'),[un,ua]=sum('unk');
+ const byr=base.filter(r=>r.st==='ok'&&r.byRRN).length;
+ $('bands').innerHTML=
+  '<div class="band bad"><div class="n num">'+plain(bn)+'</div><div class="t">Still owed to us</div><div class="v num">EGP '+money(ba)+'</div><div class="dd">Not in any statement you have loaded. These are the ones to send to the bank.</div></div>'+
+  '<div class="band ok"><div class="n num">'+plain(on)+'</div><div class="t">Already settled</div><div class="v num">EGP '+money(oa)+'</div><div class="dd">'+plain(byr)+' matched on RRN, which cannot repeat. Keep these out of your submission.</div></div>'+
+  '<div class="band unk"><div class="n num">'+plain(un)+'</div><div class="t">No statement loaded</div><div class="v num">EGP '+money(ua)+'</div><div class="dd">Cannot be decided until you add the statements for those dates.</div></div>';
+ const show=base.filter(r=>(f==='all'||r.st===f)&&(!q||[r.mid,r.store,r.mi,r.tx,r.card,String(r.a),r.auth,r.rrn].join(' ').toLowerCase().includes(q)));
+ const lab={ok:'Settled',bad:'Owed',unk:'Unknown'};
+ $('tb').innerHTML=show.length?show.slice(0,400).map(r=>
+  '<tr><td><span class="pill '+r.st+'"><i></i>'+lab[r.st]+'</span></td>'+
+  '<td>'+(r.how.length?r.how.map(h=>'<span class="ev '+(h==='RRN'?'rrn':'y')+'">'+h+'</span>').join(''):'<span class="ev">no match</span>')+'</td>'+
+  '<td class="num">'+r.rrn+'</td><td>'+r.store+'</td><td class="num">'+r.mid+'</td><td class="num">'+r.tx+'</td>'+
+  '<td class="num">'+pretty(r.date)+'</td><td class="r num">'+(r.a==null?'':money(r.a))+'</td>'+
+  '<td class="num">'+r.card+'</td><td class="num">'+r.auth+(r.st==='ok'&&!r.authOk&&r.sauth?'<div class="s">bank: '+r.sauth+'</div>':'')+'</td>'+
+  '<td class="num">'+(r.sdate?pretty(r.sdate)+(r.bdate&&r.bdate!==r.sdate?'<div class="s">batch '+pretty(r.bdate)+'</div>':''):'')+'</td>'+
+  '<td class="num">'+r.batch+'</td><td class="num">'+r.term+'</td><td class="r num">'+(r.net?money(r.net):'')+'</td></tr>').join('')
+  :'<tr><td colspan="14"><div class="empty">Nothing matches that filter.</div></td></tr>';
+ $('foot').textContent=show.length>400?'Showing the first 400 of '+plain(show.length)+'. Download the file for the full list.':'';}
+$('bDump').onclick=async()=>{
+ const fs=Object.keys(DB[ch].files);
+ if(!fs.length){alert('No '+CH[ch].name+' statements loaded yet. Add the files first.');return;}
+ try{
+  const hdr=DB[ch].files[fs[0]].hdr||[];
+  const all=[];
+  for(const f of fs){const rs=(await getRaw(ch,f))||[];for(let i=0;i<rs.length;i++)all.push(rs[i]);}
+  if(!all.length){alert('The loaded files contain no rows.');return;}
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(all,hdr.length?{header:hdr}:{}),'Sheet1');
+  XLSX.writeFile(wb,'Merchant statements '+CH[ch].name+'.xlsx');
+ }catch(e){console.error(e);alert('Could not build the file. '+(e&&e.message?e.message:'')); }
+};
+$('bFlags').onclick=()=>{
+ const F=FL[ch];
+ if(!F||!F.rows||!F.rows.length){alert('No flags file loaded yet.');return;}
+ try{
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(F.rows,F.hdr&&F.hdr.length?{header:F.hdr}:{}),'Kashier Transaction Flags');
+  XLSX.writeFile(wb,F.name.replace(/\.(xlsx|xls|csv)$/i,'')+'.xlsx');
+ }catch(e){console.error(e);alert('Could not build the file. '+(e&&e.message?e.message:''));}
+};
+$('dl').onclick=()=>{
+ const F=FL[ch];if(!RES.length||!F){alert('Load a flags file first.');return;}
+ try{
+ const lab={bad:'Still owed to us',ok:'Already settled',unk:'No statement loaded'};
+ const H=F.hdr.slice(),EX=['Status','Matched On','Bank RRN','Bank Auth Code','Settled On','Batch Date','Batch','Terminal','Settled Net','Sent to bank?'];
+ const raw=r=>F.rows[r.i];
+ const withS=r=>Object.assign({},raw(r),{'Status':lab[r.st],'Matched On':r.how.join(' + '),'Bank RRN':r.srrn,
+  'Bank Auth Code':r.sauth,'Settled On':r.sdate,'Batch Date':r.bdate,'Batch':r.batch,'Terminal':r.term,
+  'Settled Net':r.net,'Sent to bank?':''});
+ const wb=XLSX.utils.book_new();
+ XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(RES.map(withS),{header:H.concat(EX)}),'All flags');
+ for(const k of ['bad','ok','unk']){
+  const g=RES.filter(x=>x.st===k);if(!g.length)continue;
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(g.map(raw),{header:H}),lab[k].slice(0,28));}
+ const months=[...new Set(RES.filter(r=>r.st==='bad'&&r.date).map(r=>r.date.slice(0,7)))].sort();
+ for(const m of months){
+  const g=RES.filter(r=>r.st==='bad'&&r.date&&r.date.slice(0,7)===m);
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(g.map(raw),{header:H}),('Owed '+MN[+m.slice(5,7)-1]+' '+m.slice(0,4)).slice(0,28));}
+ XLSX.writeFile(wb,'RRN check '+CH[ch].name+' '+new Date().toISOString().slice(0,10)+'.xlsx');
+ }catch(e){console.error(e);alert('Could not build the file. '+(e&&e.message?e.message:''));}};
+$('bFix').onclick=()=>{
+ if(!CORR.length){alert('Load both a flags file and a Kashier transactions file first.');return;}
+ try{
+ const lab={diff:'Wrong transaction',same:'Already correct',none:'RRN not found'};
+ const row=r=>({'RRN':r.rrn,'Status':lab[r.st],
+  'Flag Transaction ID':r.ftx,'Flag MID':r.fmid,'Flag Store Name':r.fstore,'Flag Amount':r.fa,'Flag Date':r.fdate,
+  'Correct Transaction ID':r.ctx,'Correct MID':r.cmid,'Correct Store Name':r.cstore,'Correct Amount':r.ca,'Correct Date':r.cdate});
+ const wb=XLSX.utils.book_new();
+ XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(CORR.map(row)),'All flags');
+ for(const k of ['diff','none','same']){
+  const g=CORR.filter(x=>x.st===k);if(!g.length)continue;
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(g.map(row)),lab[k].slice(0,28));}
+ XLSX.writeFile(wb,'Flag corrections '+CH[ch].name+' '+new Date().toISOString().slice(0,10)+'.xlsx');
+ }catch(e){console.error(e);alert('Could not build the file. '+(e&&e.message?e.message:''));}};
+$('ffilt').onchange=drawFix;$('fq').oninput=drawFix;
+$('filt').onchange=draw;$('mfilt').onchange=draw;$('q').oninput=draw;
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+ document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));t.classList.add('on');
+ ch=t.dataset.ch;document.documentElement.style.setProperty('--accent',CH[ch].accent);
+ brand(ch);
+ $('q').value='';$('filt').value='all';if(!IX[ch])index(ch);paintA();paintB();paintC();
+ if(FL[ch]&&IX[ch].rows.length)run();else{$('res').hidden=true;$('gap').innerHTML='';}
+ fixFlags();});
+function readDir(dr){return new Promise(res=>{
+ const rd=dr.createReader(),acc=[];
+ const step=()=>rd.readEntries(es=>{if(!es.length){res(acc);return;}for(const e of es)acc.push(e);step();},()=>res(acc));
+ step();});}
+function walkEntry(e,out){return new Promise(async res=>{
+ if(!e){res();return;}
+ if(e.isFile){e.file(f=>{out.push(f);res();},()=>res());return;}
+ if(e.isDirectory){const es=await readDir(e);for(const c of es)await walkEntry(c,out);res();return;}
+ res();});}
+async function filesFromDrop(dt){
+ let roots=[],hadDir=false;
+ if(dt.items&&dt.items.length){
+  for(let i=0;i<dt.items.length;i++){
+   const en=dt.items[i].webkitGetAsEntry?dt.items[i].webkitGetAsEntry():null;
+   if(en){roots.push(en);if(en.isDirectory)hadDir=true;}}}
+ if(!roots.length)return{files:Array.from(dt.files||[]),hadDir:false};
+ const out=[];
+ for(const r of roots)await walkEntry(r,out);
+ return{files:out,hadDir};}
+async function backup(){
+ try{
+  const fs=Object.keys(DB[ch].files);
+  if(!fs.length){alert('No '+CH[ch].name+' statements loaded yet.');return;}
+  const btn=$('bBackup'),t0=btn.textContent;btn.textContent='Preparing …';btn.disabled=true;
+  const out={v:2,channel:ch,made:new Date().toISOString(),files:{}};
+  for(const f of fs){
+   out.files[f]={hdr:DB[ch].files[f].hdr||[],rows:(await getRaw(ch,f))||[]};
+   await new Promise(r=>setTimeout(r,0));}
+  const blob=new Blob([JSON.stringify(out)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='RRN statements '+CH[ch].name+' '+new Date().toISOString().slice(0,10)+'.rrnbak';
+  a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  btn.textContent=t0;btn.disabled=false;
+ }catch(e){console.error(e);alert('Could not build the backup.\n\n'+why(e));
+  const b=$('bBackup');if(b){b.textContent='Back up statements';b.disabled=false;}}}
+async function restore(file){
+ const lbl=$('subA'),orig=lbl.textContent;
+ try{
+  lbl.textContent='Reading the backup …';
+  const txt=await file.text();const d=JSON.parse(txt);
+  if(!d||!d.files){alert('That is not a backup made by this tool.');lbl.textContent=orig;return;}
+  const names=Object.keys(d.files);let n=0;
+  for(const f of names){
+   lbl.textContent='Restoring '+(n+1)+' of '+names.length+' — '+f;
+   const rows=d.files[f].rows||[];
+   await putRaw(ch,f,rows);
+   DB[ch].files[f]={hdr:d.files[f].hdr||[],n:rows.length,ix:compact(rows)};
+   n++;await new Promise(r=>requestAnimationFrame(()=>setTimeout(r,0)));}
+  index(ch);paintA();if(FL[ch])run();await save();
+  lbl.textContent=orig;
+  alert('Restored '+n+' statement file'+(n===1?'':'s')+' into '+CH[ch].name+'.');
+ }catch(e){console.error(e);lbl.textContent=orig;alert('Could not restore that backup.\n\n'+why(e));}}
+function wire(z,i,fn,multi){const Z=$(z),I=$(i);
+ Z.onclick=()=>I.click();Z.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();I.click();}};
+ I.onchange=e=>{if(e.target.files.length)fn(multi?e.target.files:e.target.files[0]);I.value='';};
+ ['dragover','dragenter'].forEach(ev=>Z.addEventListener(ev,e=>{e.preventDefault();Z.classList.add('on');}));
+ ['dragleave','drop'].forEach(ev=>Z.addEventListener(ev,e=>{e.preventDefault();Z.classList.remove('on');}));
+ Z.addEventListener('drop',async e=>{
+  if(!multi){const f=e.dataTransfer.files;if(f.length)fn(f[0]);return;}
+  const {files,hadDir}=await filesFromDrop(e.dataTransfer);
+  if(files.length)fn(files,hadDir);
+  else alert('Nothing was found in what you dropped.');});}
+wire('zA','iA',addMS,true);wire('zB','iB',addFlags,false);wire('zC','iC',addTX,false);
+$('bBackup').onclick=backup;
+$('bRestore').onclick=()=>$('iR').click();
+$('iR').onchange=e=>{if(e.target.files.length)restore(e.target.files[0]);e.target.value='';};
+$('bFolder').onclick=()=>$('iD').click();
+$('iD').onchange=e=>{if(e.target.files.length)addMS(e.target.files,true);e.target.value='';};
+function brand(c){
+ const col=c==='pos'?'#B5651D':'#2E6E5B';
+ const bg=document.getElementById('mkBg'), tk=document.getElementById('mkTick');
+ if(bg)bg.setAttribute('fill',col); if(tk)tk.setAttribute('stroke',col);
+ const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40">'+
+  '<rect width="40" height="40" rx="9" fill="'+col+'"/>'+
+  '<g fill="#fff"><rect x="7.5" y="8.5" width="2.8" height="23" rx="1.4"/>'+
+  '<rect x="13" y="8.5" width="1.6" height="23" rx=".8"/>'+
+  '<rect x="17.3" y="8.5" width="3.4" height="23" rx="1.7"/>'+
+  '<rect x="23.4" y="8.5" width="1.6" height="23" rx=".8"/>'+
+  '<rect x="27.8" y="8.5" width="2.8" height="23" rx="1.4"/></g>'+
+  '<circle cx="29.6" cy="29.6" r="8.1" fill="#fff"/>'+
+  '<path d="M25.9 29.7l2.7 2.7 4.7-5.2" stroke="'+col+'" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+ const f=document.getElementById('fav');
+ if(f)f.setAttribute('href','data:image/svg+xml,'+encodeURIComponent(svg));
+}
+brand('pos');
+document.documentElement.style.setProperty('--accent',CH.pos.accent);
+if(typeof XLSX==='undefined')alert('The spreadsheet engine failed to start. This copy of the page may be damaged.');
+load().then(()=>{index('pos');paintA();paintB();paintC();})
+ .catch(e=>{console.error(e);alert('Could not open the saved data.\n\n'+why(e));});
+</script></body></html>
