@@ -1,0 +1,1194 @@
+<meta charset="utf-8">
+<title>MIDLink — أداة مطابقة الميدات</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23123A2E'/%3E%3Cpath d='M9 21V11l4 5 4-5v10' stroke='%2354D6A6' stroke-width='2.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='23' cy='14' r='3.2' stroke='%2354D6A6' stroke-width='2.4' fill='none'/%3E%3Cpath d='M23 17.2V21' stroke='%2354D6A6' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E">
+<script src="vendor/xlsx.full.min.js"></script>
+
+<style>
+:root{
+  --bg:#F6F5F2; --panel:#FFF; --panel2:#FAFAF8; --ink:#14171A; --ink2:#525B64; --ink3:#8A939C;
+  --line:#E4E2DD; --line2:#CECBC4;
+  --brand:#123A2E; --brand2:#1D6B54; --glow:#54D6A6;
+  --hi:#1D6B54; --me:#96620F; --no:#A2352D;
+  --hiBg:#E8F2ED; --meBg:#FBF1E1; --noBg:#FAEAE8;
+  --shadow:0 1px 2px rgba(20,23,26,.04),0 4px 14px rgba(20,23,26,.05);
+  --r:11px;
+}
+[data-theme="dark"]{
+  --bg:#0E1512; --panel:#151E1A; --panel2:#1A2420; --ink:#E9EFEC; --ink2:#9FB0A8; --ink3:#6F827A;
+  --line:#243029; --line2:#33443B;
+  --brand:#2A8567; --brand2:#3AA37F; --glow:#54D6A6;
+  --hi:#5FCFA6; --me:#DDA94A; --no:#E5776C;
+  --hiBg:#142E25; --meBg:#2E2617; --noBg:#2E1B18;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.25);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);
+  font-family:'IBM Plex Sans Arabic',system-ui,-apple-system,sans-serif;font-size:15px;line-height:1.6;
+  transition:background .2s,color .2s}
+.mono{font-family:'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums}
+.wrap{max-width:1040px;margin:0 auto;padding:28px 22px 90px}
+
+/* ---------- app bar ---------- */
+.appbar{position:sticky;top:0;z-index:40;background:color-mix(in srgb,var(--panel) 88%,transparent);
+  backdrop-filter:saturate(180%) blur(12px);-webkit-backdrop-filter:saturate(180%) blur(12px);
+  border-bottom:1px solid var(--line)}
+.appbar-in{max-width:1040px;margin:0 auto;padding:11px 22px;display:flex;align-items:center;gap:16px}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brand svg{width:34px;height:34px;flex:none;border-radius:9px}
+.wordmark{display:flex;flex-direction:column;line-height:1.15;min-width:0}
+.wordmark b{font-size:16.5px;font-weight:600;letter-spacing:-.02em}
+.wordmark i{font-style:normal;font-size:11px;color:var(--ink3);letter-spacing:.02em;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+.cluster{display:flex;align-items:center;gap:8px;margin-inline-start:auto}
+.seg{display:flex;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:3px;gap:3px}
+.seg button{border:none;background:transparent;color:var(--ink2);border-radius:7px;padding:7px 14px;
+  font-family:inherit;font-size:13.5px;cursor:pointer;transition:.14s;display:flex;align-items:center;gap:7px;white-space:nowrap}
+.seg button:hover{color:var(--ink)}
+.seg button.on{background:var(--panel);color:var(--ink);font-weight:600;box-shadow:var(--shadow)}
+[data-theme="dark"] .seg button.on{background:var(--brand2);color:#fff}
+.seg.small button{padding:7px 11px;font-size:12.5px;font-weight:500}
+.badge{background:var(--noBg);color:var(--no);border-radius:99px;padding:1px 7px;font-size:11px;font-weight:600;font-family:'IBM Plex Mono',monospace}
+.seg button.on .badge{background:var(--no);color:#fff}
+.iconbtn{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);
+  color:var(--ink2);cursor:pointer;display:grid;place-items:center;transition:.15s;flex:none}
+.iconbtn:hover{border-color:var(--line2);color:var(--ink)}
+.iconbtn svg{width:17px;height:17px}
+
+h1.page{font-size:29px;font-weight:600;letter-spacing:-.03em;margin:0 0 7px;line-height:1.2}
+p.sub{margin:0 0 24px;color:var(--ink2);font-size:14.5px;max-width:64ch}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:22px;margin-bottom:13px;box-shadow:var(--shadow)}
+.card>h2{font-size:16px;font-weight:600;margin:0 0 3px;display:flex;align-items:center;gap:10px;letter-spacing:-.01em}
+.card>h2 .n{font-family:'IBM Plex Mono',monospace;background:var(--brand);color:#fff;width:23px;height:23px;
+  display:grid;place-items:center;border-radius:7px;font-size:12px;flex:none}
+.hint{color:var(--ink2);font-size:13px;margin:0 0 15px;padding-inline-start:33px}
+
+.drop{border:1.5px dashed var(--line2);border-radius:var(--r);padding:24px;text-align:center;cursor:pointer;background:var(--panel2);transition:.15s}
+.drop:hover,.drop.over{border-color:var(--brand2);background:var(--hiBg)}
+.drop b{display:block;font-weight:500;margin-bottom:3px;font-size:14.5px}
+.drop span{color:var(--ink3);font-size:12.5px}
+input[type=file]{display:none}
+.files{list-style:none;margin:11px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.files li{display:flex;align-items:center;gap:10px;background:var(--panel2);border:1px solid var(--line);
+  border-radius:8px;padding:9px 12px;font-size:13px}
+.files li .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.files li .meta{color:var(--ink3);font-size:11.5px;font-family:'IBM Plex Mono',monospace}
+.files li .big{color:var(--no);font-weight:600}
+.files li button{background:none;border:none;color:var(--ink3);cursor:pointer;font-size:18px;line-height:1;padding:0 3px}
+.files li button:hover{color:var(--no)}
+
+.modes{display:flex;flex-direction:column;gap:8px;margin-bottom:18px}
+.mode{display:flex;gap:12px;align-items:flex-start;border:1.5px solid var(--line);border-radius:var(--r);
+  padding:14px 16px;cursor:pointer;transition:.14s;background:var(--panel2)}
+.mode:hover{border-color:var(--line2)}
+.mode input{accent-color:var(--brand2);width:17px;height:17px;margin-top:2px;flex:none}
+.mode:has(input:checked){border-color:var(--brand2);background:var(--hiBg)}
+.mbody b{font-size:14.5px;font-weight:600;display:block}
+.mbody b em{font-style:normal;font-weight:500;color:var(--brand2);font-size:12.5px}
+.mbody small{display:block;color:var(--ink2);font-size:13px;margin:3px 0 6px;line-height:1.55}
+.mtag{display:inline-block;font-size:11.5px;font-weight:500;padding:3px 9px;border-radius:6px}
+.t-hi{background:var(--hiBg);color:var(--hi)} .t-lo{background:var(--noBg);color:var(--no)}
+
+.run{width:100%;background:var(--brand);color:#fff;border:none;border-radius:var(--r);padding:15px;
+  font-family:inherit;font-size:15.5px;font-weight:600;cursor:pointer;transition:.14s}
+.run:hover:not(:disabled){background:var(--brand2)}
+.run:disabled{opacity:.32;cursor:not-allowed}
+#prog{display:none;margin-top:11px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--ink2)}
+#prog.on{display:block}
+#prog .bar2{height:4px;background:var(--line);border-radius:99px;margin-top:6px;overflow:hidden}
+#prog .bar2 i{display:block;height:100%;background:var(--brand2);width:0;transition:width .2s}
+
+details{margin-top:16px;font-size:13px}
+summary{cursor:pointer;color:var(--ink2);font-weight:500;list-style:none}
+summary::-webkit-details-marker{display:none}
+summary::before{content:'›';margin-inline-end:7px;display:inline-block;transition:.15s;font-size:16px}
+details[open] summary::before{transform:rotate(90deg)}
+details .body{padding:12px 0 0;color:var(--ink2);line-height:1.75}
+.opts{display:flex;flex-wrap:wrap;gap:15px;align-items:center;margin-top:12px;padding-top:14px;border-top:1px solid var(--line)}
+label.chk{display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;user-select:none}
+label.chk input{accent-color:var(--brand2);width:16px;height:16px}
+.num{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--ink2)}
+.num input{width:56px;padding:6px;border:1px solid var(--line2);border-radius:7px;background:var(--panel);color:var(--ink);
+  font-family:'IBM Plex Mono',monospace;font-size:12.5px;text-align:center}
+
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:11px;margin-bottom:13px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:15px 17px;box-shadow:var(--shadow)}
+.kpi .k{font-size:12px;color:var(--ink3)}
+.kpi .v{font-family:'IBM Plex Mono',monospace;font-size:28px;font-weight:600;letter-spacing:-.04em;margin-top:1px;line-height:1.1}
+
+.rung{display:grid;grid-template-columns:1fr 74px;gap:13px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.rung:last-child{border-bottom:none}
+.rung .lbl{font-size:14px;font-weight:500}
+.rung .lbl small{display:block;font-weight:400;color:var(--ink3);font-size:12.5px;margin-top:1px}
+.rung .cnt{text-align:start;font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:600}
+.bar{height:6px;background:var(--line);border-radius:99px;overflow:hidden;margin-top:7px}
+.bar i{display:block;height:100%;border-radius:99px;transition:width .6s cubic-bezier(.2,.7,.3,1)}
+.c-high i{background:var(--hi)}.c-high .cnt{color:var(--hi)}
+.c-med i{background:var(--me)}.c-med .cnt{color:var(--me)}
+.c-none i{background:var(--no)}.c-none .cnt{color:var(--no)}
+
+/* ---------- filters ---------- */
+.filters{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin-bottom:12px}
+.search{position:relative;flex:1;min-width:190px}
+.search input{width:100%;padding:9px 34px 9px 12px;border:1px solid var(--line2);border-radius:9px;
+  background:var(--panel);color:var(--ink);font-family:inherit;font-size:13.5px}
+.search input:focus{outline:none;border-color:var(--brand2)}
+.search svg{position:absolute;inset-inline-end:11px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--ink3);pointer-events:none}
+select.f{padding:9px 11px;border:1px solid var(--line2);border-radius:9px;background:var(--panel);color:var(--ink);
+  font-family:inherit;font-size:13.5px;cursor:pointer;max-width:210px}
+select.f:focus{outline:none;border-color:var(--brand2)}
+.chipbtn{border:1px solid var(--line2);background:var(--panel);color:var(--ink2);border-radius:9px;
+  padding:9px 13px;font-family:inherit;font-size:13px;cursor:pointer}
+.chipbtn.on{background:var(--noBg);border-color:var(--no);color:var(--no);font-weight:500}
+.fcount{font-size:12.5px;color:var(--ink3);font-family:'IBM Plex Mono',monospace}
+
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{text-align:start;font-size:11.5px;color:var(--ink3);font-weight:500;padding:10px;
+  border-bottom:1px solid var(--line2);white-space:nowrap;background:var(--panel)}
+td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+tbody tr:hover{background:var(--panel2)}
+.pill{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11.5px;font-weight:500;white-space:nowrap}
+.p-high{background:var(--hiBg);color:var(--hi)}
+.p-med{background:var(--meBg);color:var(--me)}
+.p-none{background:var(--noBg);color:var(--no)}
+.scroll{overflow:auto;max-height:440px;border:1px solid var(--line);border-radius:var(--r);background:var(--panel)}
+.scroll thead th{position:sticky;top:0;z-index:1}
+.empty{padding:34px;text-align:center;color:var(--ink3);font-size:13.5px}
+
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:13px}
+.tabs button{background:var(--panel);border:1px solid var(--line);border-radius:8px;
+  padding:8px 13px;font-family:inherit;font-size:13px;cursor:pointer;color:var(--ink2)}
+.tabs button.on{background:var(--brand);color:#fff;border-color:var(--brand);font-weight:500}
+.tabs button .b{font-family:'IBM Plex Mono',monospace;font-size:11.5px;opacity:.65;margin-inline-start:6px}
+
+.btnrow{display:flex;gap:9px;flex-wrap:wrap;margin-top:15px}
+.dl{background:var(--brand);color:#fff;border:none;border-radius:var(--r);padding:13px 24px;font-size:14.5px;
+  font-weight:600;cursor:pointer;font-family:inherit}
+.dl:hover{background:var(--brand2)}
+.dl.ghost{background:transparent;color:var(--ink2);border:1px solid var(--line2)}
+.dl.ghost:hover{background:var(--panel2);color:var(--ink)}
+.warn{background:var(--meBg);border:1px solid var(--line2);border-radius:9px;padding:12px 15px;font-size:13px;margin-top:10px;line-height:1.65}
+.warn b{display:block;margin-bottom:2px}
+code{font-family:'IBM Plex Mono',monospace;background:var(--panel2);border:1px solid var(--line);padding:1px 6px;border-radius:5px;font-size:12px}
+
+/* ---------- history ---------- */
+.view{display:none}.view.on{display:block}
+.run-row{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:15px 18px;margin-bottom:9px;box-shadow:var(--shadow)}
+.run-head{display:flex;align-items:center;gap:13px;flex-wrap:wrap;cursor:pointer}
+.run-head .d{font-family:'IBM Plex Mono',monospace;font-size:13.5px;font-weight:600;min-width:132px}
+.run-head .f{flex:1;font-size:13px;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:130px}
+.run-head .s{font-family:'IBM Plex Mono',monospace;font-size:12.5px}
+.run-body{display:none;margin-top:13px;padding-top:13px;border-top:1px solid var(--line)}
+.run-row.open .run-body{display:block}
+.miniT{width:100%;font-size:12px;border-collapse:collapse}
+.miniT th{padding:6px 8px;font-size:11px}
+.miniT td{padding:6px 8px}
+@media (max-width:720px){
+ .wrap{padding:20px 13px 60px}h1.page{font-size:23px}.card{padding:17px}.hint{padding-inline-start:0}
+ .appbar-in{padding:9px 13px;gap:10px}
+ .wordmark i{display:none}
+ .seg button{padding:7px 10px;font-size:12.5px}
+}
+@media (max-width:470px){ .wordmark b{font-size:15px} .seg.small{display:none} }
+</style>
+
+<div class="wrap" dir="rtl">
+
+<header class="appbar">
+  <div class="appbar-in">
+    <div class="brand">
+      <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect width="32" height="32" rx="8" fill="var(--brand)"/>
+        <path d="M9 21V11l4 5 4-5v10" stroke="var(--glow)" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="23" cy="14" r="3.2" stroke="var(--glow)" stroke-width="2.4" fill="none"/>
+        <path d="M23 17.2V21" stroke="var(--glow)" stroke-width="2.4" stroke-linecap="round"/>
+      </svg>
+      <span class="wordmark"><b>MIDLink</b><i data-i18n="brandsub">Kashier · Financial Operations</i></span>
+    </div>
+
+    <div class="cluster">
+      <div class="seg" role="tablist">
+        <button id="navRun" class="on" onclick="setView('run')" data-i18n="navRun">مطابقة</button>
+        <button id="navHist" onclick="setView('hist')"><span data-i18n="navHist">السجل</span><span class="badge" id="histBadge">0</span></button>
+      </div>
+      <div class="seg small">
+        <button id="langAr" onclick="applyLang('ar')">ع</button>
+        <button id="langEn" onclick="applyLang('en')">EN</button>
+      </div>
+      <button class="iconbtn" id="themeBtn" title="Theme"></button>
+    </div>
+  </div>
+</header>
+
+<!-- ==================== RUN VIEW ==================== -->
+<div class="view on" id="viewRun">
+<h1 class="page" data-i18n="h_run">مطابقة الميدات</h1>
+<p class="sub" data-i18n="sub_run">زي XLOOKUP بس مش محتاج تقوله يدوّر بإيه. بيقرا كل خلية في ملف شركة التقسيط أو كشف البنك، ويجرّبها على كل مفتاح في تصدير البورتال، وينزّل الـ MID واسم التاجر ورقم المعاملة في مكانهم.</p>
+
+<div class="card">
+  <h2><span class="n">1</span><span data-i18n="c1">ملف البورتال</span></h2>
+  <p class="hint" data-i18n="h1">تصدير المعاملات من Kashier. مصدر الميدات. تقدر ترفع أكتر من ملف. للملفات فوق 80 ميجا صدّرها <b>CSV</b> — الأداة بتقراها بالتدفق من غير ما تحمّلها كلها في الذاكرة.</p>
+  <div class="drop" id="dropA"><b data-i18n="drop">اسحب الملف هنا أو اضغط للاختيار</b><span>xlsx · xls · csv</span></div>
+  <input type="file" id="fileA" multiple accept=".xlsx,.xls,.csv">
+  <ul class="files" id="listA"></ul>
+</div>
+
+<div class="card">
+  <h2><span class="n">2</span><span data-i18n="c2">الملف اللي عايز تملاه</span></h2>
+  <p class="hint" data-i18n="h2">شيت شركة تقسيط أو كشف بنك/ويلت. كل التابات بتتعالج. لو الملف فيه أعمدة <code>Merchant ID</code> أو <code>Store Name</code> أو <code>Kashier Transaction ID</code> فاضية، الأداة بتملاها في مكانها، وبتقلب عمود <code>Status</code> لـ <code>MATCHED</code>.</p>
+  <div class="drop" id="dropB"><b data-i18n="drop">اسحب الملف هنا أو اضغط للاختيار</b><span>xlsx · xls · csv</span></div>
+  <input type="file" id="fileB" multiple accept=".xlsx,.xls,.csv">
+  <ul class="files" id="listB"></ul>
+</div>
+
+<div class="card">
+  <h2><span class="n">3</span><span data-i18n="c3">إزاي تدوّر</span></h2>
+  <p class="hint" data-i18n="h3">اختار واحد. الفرق بينهم: هل تقبل نتيجة تحدد <b>المعاملة</b> نفسها، ولا يكفيك تحديد <b>التاجر</b>.</p>
+  <div class="modes">
+    <label class="mode"><input type="radio" name="mode" value="strict">
+      <div class="mbody"><b data-i18n="m1">دقيق</b>
+        <small data-i18n="m1d">مفاتيح المعاملة بس — رقم قرض، مرجع بوابة، RRN، كود تفويض مع المبلغ.</small>
+        <span class="mtag t-hi" data-i18n="m1t">صفر أخطاء في كل الاختبارات</span></div></label>
+    <label class="mode"><input type="radio" name="mode" value="balanced" checked>
+      <div class="mbody"><b data-i18n="m2">متوازن <em>— المستحسن</em></b>
+        <small data-i18n="m2d">زي الدقيق، وكمان لو المعاملة مش موجودة بيحدد التاجر من كود التاجر في الاسم أو من ربط اتعلّمه من صفوف اتحلّت.</small>
+        <span class="mtag t-hi" data-i18n="m2t">التاجر مؤكد · المعاملة لأ</span></div></label>
+    <label class="mode"><input type="radio" name="mode" value="wide">
+      <div class="mbody"><b data-i18n="m3">واسع</b>
+        <small data-i18n="m3d">بيضيف التخمين بالمبلغ والتاريخ واسم العميل. بيملا صفوف أكتر، بس بيدّي نتايج غلط.</small>
+        <span class="mtag t-lo" data-i18n="m3t">دقته 78% على بيانات الكروت — للمراجعة اليدوية بس</span></div></label>
+  </div>
+  <button class="run" id="run" disabled data-i18n="btnRun">ابدأ المطابقة</button>
+  <div id="prog"><span id="progText"></span><div class="bar2"><i id="progBar"></i></div></div>
+  <details><summary data-i18n="adv">إعدادات متقدمة</summary>
+    <div class="opts">
+      <label class="chk"><input type="checkbox" id="optStatus" checked><span data-i18n="o1">حدّث عمود Status لـ MATCHED</span></label>
+      <label class="chk"><input type="checkbox" id="optSave" checked><span data-i18n="o2">احفظ التشغيلة في السجل</span></label>
+      <label class="chk"><input type="checkbox" id="optLite"><span data-i18n="o3">وضع خفيف للملفات الضخمة</span></label>
+      <div class="num"><span data-i18n="o4">سماح التاريخ ±</span> <input type="number" id="tol" value="3" min="0" max="30"> <span data-i18n="o4b">يوم</span></div>
+      <div class="num"><span data-i18n="o5">أقل طول لرقم المفتاح</span> <input type="number" id="minLen" value="5" min="3" max="12"></div>
+    </div>
+  </details>
+</div>
+
+<div id="out">
+  <div class="kpis" id="kpis"></div>
+  <div class="card">
+    <h2 data-i18n="c_ladder">إزاي اتحلّت الصفوف</h2>
+    <p class="hint" data-i18n="h_ladder">لو معظم الصفوف نزلت تحت، المشكلة في تصدير البورتال مش في المطابقة.</p>
+    <div id="ladder"></div>
+  </div>
+  <div class="card">
+    <h2 data-i18n="c_res">النتائج</h2>
+    <div class="tabs" id="tabs"></div>
+    <div class="filters">
+      <div class="search">
+        <input id="q" data-i18n-ph="qph" placeholder="ابحث في أي عمود — رقم، اسم، MID…" oninput="paintTable()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      </div>
+      <select class="f" id="fConf" onchange="paintTable()"><option value="" data-i18n="fConf">كل مستويات الثقة</option></select>
+      <select class="f" id="fKey" onchange="paintTable()"><option value="" data-i18n="fKey">كل المفاتيح</option></select>
+      <select class="f" id="fMid" onchange="paintTable()"><option value="" data-i18n="fMid">كل التجار</option></select>
+      <button class="chipbtn" id="fMiss" onclick="this.classList.toggle('on');paintTable()" data-i18n="onlyMiss">غير المطابق بس</button>
+      <span class="fcount" id="fCount"></span>
+    </div>
+    <div class="scroll"><table><thead id="thead"></thead><tbody id="tbody"></tbody></table></div>
+    <div class="btnrow">
+      <button class="dl" id="dl" data-i18n="dlAll">تحميل الملف كامل</button>
+      <button class="dl ghost" id="dlMiss" data-i18n="dlMiss">تصدير غير المطابق بس</button>
+      <button class="dl ghost" id="dlView" data-i18n="dlView">تصدير المعروض حالياً</button>
+    </div>
+    <div id="warns"></div>
+  </div>
+</div>
+</div>
+
+<!-- ==================== HISTORY VIEW ==================== -->
+<div class="view" id="viewHist">
+<h1 class="page" data-i18n="h_hist">سجل التشغيل</h1>
+<p class="sub" data-i18n="sub_hist">كل مطابقة بتتسجّل بتاريخها ووقتها مع كل صف مطلعش ليه MID. السجل محفوظ في المتصفح على الجهاز ده، ومبيتبعتش لأي حد.</p>
+<div class="kpis" id="histKpis"></div>
+<div class="card">
+  <h2 data-i18n="c_miss">الصفوف اللي مطلعش ليها MID</h2>
+  <p class="hint" data-i18n="h_miss">مجمّعة من كل التشغيلات. تقدر تصدّرها كملف واحد وتبعته للمزوّد أو للفريق التقني.</p>
+  <div class="filters">
+    <div class="search">
+      <input id="hq" data-i18n-ph="hqph" placeholder="ابحث في السجل…" oninput="paintHist()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+    </div>
+    <select class="f" id="hDate" onchange="paintHist()"><option value="" data-i18n="fDate">كل التواريخ</option></select>
+    <span class="fcount" id="hCount"></span>
+  </div>
+  <div id="histList"></div>
+  <div class="btnrow">
+    <button class="dl" id="dlHist" data-i18n="dlHist">تصدير السجل كله</button>
+    <button class="dl ghost" id="clrHist" data-i18n="clrHist">مسح السجل</button>
+  </div>
+</div>
+</div>
+
+<div style="text-align:center;color:var(--ink3);font-size:12px;margin-top:26px">
+  <span data-i18n="foot">MIDLink · البيانات كلها بتتعالج على جهازك ومبتخرجش منه</span>
+</div>
+</div>
+
+<script>
+
+const $=s=>document.querySelector(s);
+const A2L={'ا':'a','ب':'b','ت':'t','ث':'s','ج':'g','ح':'h','خ':'k','د':'d','ذ':'z','ر':'r','ز':'z','س':'s','ش':'s','ص':'s','ض':'d','ط':'t','ظ':'z','ع':'a','غ':'g','ف':'f','ق':'k','ك':'k','ل':'l','م':'m','ن':'n','ه':'h','و':'w','ي':'y','ء':''};
+const ARN={'أ':'ا','إ':'ا','آ':'ا','ى':'ي','ة':'ه','ؤ':'و','ئ':'ي','ی':'ي','ک':'ك'};
+
+function normName(x){
+  if(x==null) return '';
+  let s=String(x).normalize('NFKC').replace(/[\u064B-\u0652\u0640]/g,'');
+  s=[...s].map(c=>ARN[c]||c).join('');
+  s=s.replace(/[^0-9A-Za-z\u0600-\u06FF]+/g,' ').trim().toLowerCase();
+  return s.replace(/\s+/g,' ');
+}
+function skel(tok){
+  let t;
+  if(/[\u0600-\u06FF]/.test(tok)) t=[...tok].map(c=>A2L[c]!==undefined?A2L[c]:'').join('');
+  else{
+    t=tok.toLowerCase();
+    [['ph','f'],['ck','k'],['sh','s'],['ch','s'],['kh','k'],['gh','g'],['th','s']].forEach(p=>t=t.split(p[0]).join(p[1]));
+    t=t.replace(/q/g,'k').replace(/c/g,'k').replace(/j/g,'g').replace(/x/g,'ks');
+  }
+  return t.replace(/[aeiouwyh]/g,'').replace(/(.)\1+/g,'$1');
+}
+/* a masked card number is not a name — only word-tokens with real letters count */
+function nameToks(x){
+  return [...new Set(normName(x).split(' ')
+    .filter(t=>/[a-z\u0600-\u06FF]/i.test(t))
+    .map(skel).filter(z=>z.length>=2))];
+}
+function namePairs(x){
+  const t=nameToks(x),o=[];
+  for(let i=0;i<t.length;i++) for(let j=i+1;j<t.length;j++) o.push([t[i],t[j]].sort().join('|'));
+  return o;
+}
+function digits(x){ return String(x==null?'':x).replace(/\D/g,''); }
+/* a cell is a numeric key only if it is genuinely a number, not a GUID that happens to contain digits */
+function numericish(s){ return /^[0-9][0-9\s\-_.]*$/.test(s); }
+function toDate(v){
+  if(v instanceof Date && !isNaN(v)) return v;
+  const s=String(v==null?'':v).trim(); if(s.length<8) return null;
+  let m=s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/); if(m) return new Date(+m[3],+m[2]-1,+m[1]);
+  m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);                 if(m) return new Date(+m[1],+m[2]-1,+m[3]);
+  return null;
+}
+const DAY=864e5;
+function toNum(v){ if(v==null||v==='') return null; const s=String(v); if(!/^-?[\d,\s.]+$/.test(s)) return null; const n=Number(s.replace(/[,\s]/g,'')); return isNaN(n)?null:n; }
+
+const IDRX=/(^|[^a-z])(id|no|num|number|ref|reference|order|loan|trx|transaction|application|national|mobile|phone|msisdn|card|invoice|receipt|contract|batch)([^a-z]|$)/i;
+const NOTID=/(amount|price|fee|total|rate|value|balance|sum|count|duration|months|tenor|installment|payment|down)/i;
+function looksId(k){ const w=k.replace(/([a-z])([A-Z])/g,'$1 $2'); return IDRX.test(w)&&!NOTID.test(w); }
+const NAMERX=/name/i;
+function walk(o,cb,path){
+  path=path||'';
+  if(o==null) return;
+  if(Array.isArray(o)){ o.forEach(v=>walk(v,cb,path)); return; }
+  if(typeof o==='object'){ for(const k in o) walk(o[k],cb,k); return; }
+  cb(path,o);
+}
+
+/* ---------- reading : xlsx in memory, csv by stream ---------- */
+function parseCSVText(txt,onRow,state){
+  let f=state.f, row=state.row, q=state.q;
+  for(let i=0;i<txt.length;i++){
+    const ch=txt[i];
+    if(q){ if(ch==='"'){ if(txt[i+1]==='"'){f+='"';i++;} else q=false; } else f+=ch; }
+    else if(ch==='"') q=true;
+    else if(ch===','){ row.push(f); f=''; }
+    else if(ch==='\n'){ row.push(f); onRow(row); row=[]; f=''; }
+    else if(ch!=='\r') f+=ch;
+  }
+  state.f=f; state.row=row; state.q=q;
+}
+async function streamCSV(file,onRow,onProg){
+  const dec=new TextDecoder('utf-8'), CH=8*1024*1024;
+  const st={f:'',row:[],q:false};
+  if(file._buf){
+    parseCSVText(dec.decode(new Uint8Array(file._buf)),onRow,st);
+    if(st.f!==''||st.row.length){ st.row.push(st.f); onRow(st.row); }
+    if(onProg) onProg(1);
+    return;
+  }
+  for(let off=0; off<file.size; off+=CH){
+    let buf;
+    try{ buf=await file.slice(off,off+CH).arrayBuffer(); }
+    catch(e){ throw new Error('الملف «'+file.name+'» مش متقري أثناء القراءة. اقفله من إكسل وارفعه تاني.'); }
+    parseCSVText(dec.decode(buf,{stream:true}),onRow,st);
+    if(onProg) onProg(Math.min(1,(off+CH)/file.size));
+    await new Promise(r=>setTimeout(r));
+  }
+  if(st.f!==''||st.row.length){ st.row.push(st.f); onRow(st.row); }
+}
+/* one message per cause, each naming what to do next */
+function whyFail(e){
+ const n=(e&&e.name)||'', m=(e&&e.message)||String(e||'');
+ const en=(LANG==='en');
+ if(typeof XLSX==='undefined')
+  return en?'The spreadsheet engine is not loaded on this page. Close the tab and open the file again.'
+          :'محرك قراءة الإكسل مش محمّل في الصفحة دي. اقفل التاب وافتح الملف تاني.';
+ if(n==='NotReadableError'||/مش متقري|could not be read|permission problems/i.test(m))
+  return en?'Windows would not hand the file over. It is almost always still open in Excel — close it there and pick it again.'
+          :'ويندوز مش مسلّمة الملف. غالباً لسه مفتوح في إكسل — اقفله واختاره تاني.';
+ if(n==='RangeError'||/allocation failed|out of memory|Invalid (string|array) length/i.test(m))
+  return en?'The browser ran out of memory. Export the big file as CSV — this tool streams CSV without loading it all at once.'
+          :'المتصفح خلصت ذاكرته. صدّر الملف الكبير CSV — الأداة بتقراه بالتدفق من غير ما تحمّله كله.';
+ if(/password|encrypt/i.test(m))
+  return en?'The file is password protected. Remove the password in Excel and save it again.'
+          :'الملف عليه باسورد. شيل الباسورد من إكسل واحفظه تاني.';
+ if(/zip|corrupt|unsupported|Cannot find file/i.test(m))
+  return en?'This is not a readable spreadsheet. If a system exported it, open it in Excel and Save As .xlsx.'
+          :'ده مش شيت مقروء. لو طالع من سيستم، افتحه في إكسل واحفظه Save As بصيغة .xlsx.';
+ return (en?'Something went wrong while processing: ':'حصلت مشكلة أثناء المعالجة: ')+(n?n+': ':'')+m;}
+const isCSV=f=>/\.csv$/i.test(f.name);
+/* a File is only a pointer to something on disk. if that something is moved,
+   re-downloaded, or rewritten by Excel after the picker ran, the pointer dies and
+   the browser throws NotReadableError. we snapshot at selection time and keep it. */
+async function grab(f){
+  if(f._buf) return f._buf;
+  try{ f._buf=await f.arrayBuffer(); return f._buf; }
+  catch(e){
+    throw new Error('الملف «'+f.name+'» مش متقري. غالباً اتغيّر أو اتقفل أو اتنقل بعد ما اخترته — '+
+      'اقفله من إكسل وارفعه تاني من الزرار.');
+  }
+}
+async function eachSheet(file,cb,onProg){
+  if(isCSV(file)){
+    const rows=[]; await streamCSV(file,r=>rows.push(r),onProg);
+    cb('CSV',rows); return;
+  }
+  /* dense mode roughly halves parse time on 100k-row exports */
+  const wb=XLSX.read(await grab(file),{type:'array',cellDates:true,dense:true});
+  wb.SheetNames.forEach(sn=>cb(sn,XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,defval:null,blankrows:true})));
+}
+/* portal side never needs the rows kept — stream straight into the index */
+async function eachPortalRow(file,cb,onProg){
+  if(isCSV(file)){
+    let head=null;
+    await streamCSV(file,r=>{ if(!head){ head=r.map(x=>String(x==null?'':x).trim()); cb(head,null); } else cb(head,r); },onProg);
+    return;
+  }
+  await eachSheet(file,(sn,rows)=>{
+    if(!rows.length) return;
+    const h=findHeader(rows), head=(rows[h]||[]).map(x=>String(x==null?'':x).trim());
+    cb(head,null);
+    for(let r=h+1;r<rows.length;r++) cb(head,rows[r]||[]);
+  });
+}
+function findHeader(rows){
+  for(let r=0;r<Math.min(rows.length,12);r++){
+    if((rows[r]||[]).filter(v=>v!==null&&String(v).trim()!=='').length>=3) return r;
+  }
+  return 0;
+}
+
+/* ---------- index ---------- */
+const AUTHRX=/^(authorization\s*id|auth\s*code|authorisation\s*id|approval\s*code|rrn|retrieval\s*reference(\s*number)?)$/i;
+async function buildIndex(files,opts,onProg){
+  const idMap=new Map(), nmMap=new Map(), amtMap=new Map(), authMap=new Map(), midMap=new Map();
+  let rows=0, dMin=null, dMax=null;
+  /* a phone or a national id identifies a person, not a transaction — the same
+     person shops at many merchants, so these keys are indexed but ranked last */
+  const WEAK=/(mobile|phone|msisdn|national|holder)/i;
+  const add=(map,key,mid,store,txid,src,weak)=>{
+    if(!key) return;
+    let e=map.get(key);
+    if(!e){ e={mids:new Set(),store,txid,src,weak:!!weak}; map.set(key,e); }
+    e.mids.add(mid);
+  };
+  let C=null;
+  for(let fi=0;fi<files.length;fi++){
+    await eachPortalRow(files[fi],(head,row)=>{
+      if(row===null){
+        const ix=n=>head.findIndex(x=>x.toLowerCase()===n.toLowerCase());
+        C={mid:ix('Merchant ID'),store:ix('Store Name'),tx:ix('Transaction ID'),date:ix('Date'),
+           amt:ix('amount'),amt2:ix('Original Amount'),
+           flat:['Gateway Transaction Reference','Transaction ID','Merchant Order Id','Origin Id','Account ID'].map(ix).filter(i=>i>=0),
+           auth:head.map((x,i)=>AUTHRX.test(x)?i:-1).filter(i=>i>=0),
+           json:[],names:[ix('Card Holder Name'),ix('Customer Name')].filter(i=>i>=0)};
+        head.forEach((x,i)=>{ if(/details$/i.test(x)||/^metadata$/i.test(x)) C.json.push(i); });
+        return;
+      }
+      if(!C||C.mid<0) return;
+      const mid=row[C.mid]; if(mid==null||mid==='') return;
+      rows++;
+      const store=C.store>=0?row[C.store]:'', txid=C.tx>=0?row[C.tx]:'';
+      /* provider statements often print the merchant as "KR OUD - 223103241":
+         that number is the MID's digits plus a trailing account digit. index the
+         digit form of every MID so those labels resolve without guessing. */
+      const mdg=String(mid).replace(/\D/g,'');
+      if(mdg.length>=6&&!midMap.has(mdg)) midMap.set(mdg,{mid,store});
+      C.flat.forEach(i=>{
+        const v=row[i]; if(v==null||v==='') return;
+        const s=String(v).trim(); if(s.length<3) return;
+        if(/[^0-9]/.test(s)) add(idMap,s.toUpperCase(),mid,store,txid,head[i]);
+        if(numericish(s)){
+          const d=digits(s);
+          if(d.length>=opts.minLen){ add(idMap,d,mid,store,txid,head[i]);
+            if(d.length>=15) add(idMap,d.slice(0,15),mid,store,txid,head[i]+' (15)'); }
+        }
+      });
+      if(opts.lite) return;
+      C.json.forEach(i=>{
+        const raw=row[i]; if(!raw||String(raw).length<3) return;
+        let o; try{ o=JSON.parse(raw); }catch(e){ return; }
+        walk(o,(k,v)=>{
+          if(v===null||v===''||typeof v==='boolean') return;
+          const s=String(v).trim(); if(!s) return;
+          if(looksId(k)){
+            if(numericish(s)){
+              const d=digits(s);
+              if(d.length>=opts.minLen){ const wk=WEAK.test(k); add(idMap,d,mid,store,txid,k,wk);
+                if(d.length>=15) add(idMap,d.slice(0,15),mid,store,txid,k+' (15)',wk); }
+            } else if(s.length>=8) add(idMap,s.toUpperCase(),mid,store,txid,k,WEAK.test(k));
+          }
+          if(NAMERX.test(k)&&/[a-z\u0600-\u06FF]/i.test(s))
+            namePairs(s).forEach(pk=>add(nmMap,pk,mid,store,txid,k));
+        });
+      });
+      C.names.forEach(i=>{ if(row[i]) namePairs(row[i]).forEach(pk=>add(nmMap,pk,mid,store,txid,head[i])); });
+      const a=toNum(C.amt>=0?row[C.amt]:null) ?? toNum(C.amt2>=0?row[C.amt2]:null);
+      const dt=C.date>=0?toDate(row[C.date]):null;
+      /* a card auth code is only 6 digits — far too short to stand alone, but
+         auth + amount is the standard card reconciliation key and is effectively unique */
+      /* an RRN is 12 digits and globally unique — strong enough to stand alone,
+         unlike a 6-digit auth code which needs the amount beside it */
+      C.auth.forEach(i=>{
+        const d=digits(row[i]);
+        if(d.length>=10) add(idMap,d,mid,store,txid,head[i]);
+      });
+      if(a!=null) C.auth.forEach(i=>{
+        const raw=String(row[i]==null?'':row[i]).trim().toUpperCase();
+        if(raw.length<4||raw.length>12) return;
+        const cents='|'+Math.round(Math.abs(a)*100);
+        add(authMap,raw+cents,mid,store,txid,head[i]+' + المبلغ');
+        /* auth codes carry leading zeros and sometimes letters — index every form
+           the bank statement might store them in */
+        const d=digits(raw);
+        if(d&&d!==raw) add(authMap,d+cents,mid,store,txid,head[i]+' + المبلغ');
+        const st=raw.replace(/^0+/,'');
+        if(st&&st!==raw) add(authMap,st+cents,mid,store,txid,head[i]+' + المبلغ');
+      });
+      if(dt){ if(!dMin||dt<dMin) dMin=dt; if(!dMax||dt>dMax) dMax=dt; }
+      if(a!=null){
+        const k=Math.round(Math.abs(a)*100);
+        if(!amtMap.has(k)) amtMap.set(k,[]);
+        amtMap.get(k).push({mid,store,txid,dt});
+      }
+    },p=>onProg&&onProg((fi+p)/files.length));
+  }
+  const clean=m=>{ let bad=0; for(const kv of m){ if(kv[1].mids.size>1){ m.delete(kv[0]); bad++; } } return bad; };
+  return {idMap,nmMap,amtMap,authMap,midMap,rows,dMin,dMax,idConf:clean(idMap),nmConf:clean(nmMap),authConf:clean(authMap)};
+}
+
+/* ---------- match ---------- */
+function matchRow(cells,idx,opts){
+  const hits=[];
+  /* auth code x amount, tried across every numeric pair in the row */
+  if(idx.authMap&&idx.authMap.size){
+    const auths=[], nums=[];
+    for(const v of cells){
+      if(v==null||v instanceof Date) continue;
+      const raw=String(v).trim().toUpperCase();
+      if(raw.length>=4&&raw.length<=12&&/\d/.test(raw)&&!/[\s,]/.test(raw)) auths.push(raw);
+      const n=toNum(v); if(n!=null&&Math.abs(n)>=0.01) nums.push(n);
+    }
+    for(const au of auths) for(const b of nums){
+      const e=idx.authMap.get(au+'|'+Math.round(Math.abs(b)*100));
+      if(e) hits.push({mid:[...e.mids][0],key:e.src,val:au+' · '+b,store:e.store,txid:e.txid,rank:1});
+    }
+  }
+  for(const v of cells){
+    if(v==null||v===''||v instanceof Date) continue;
+    const s=String(v).trim();
+    const cand=[];
+    if(s.length>=6&&/[^0-9]/.test(s)) cand.push([s.toUpperCase(),0]);
+    if(numericish(s)){
+      const d=digits(s);
+      if(d.length>=opts.minLen){
+        cand.push([d,d.length>=12?1:(d.length>=8?2:4)]);
+        if(d.length>=15) cand.push([d.slice(0,15),3]);
+      }
+    }
+    for(const c of cand){
+      const e=idx.idMap.get(c[0]);
+      if(e) hits.push({mid:[...e.mids][0],key:e.src,val:c[0],store:e.store,txid:e.txid,rank:e.weak?5:c[1]});
+    }
+  }
+  if(hits.length){
+    const best=Math.min.apply(null,hits.map(h=>h.rank));
+    const top=hits.filter(h=>h.rank===best);
+    const mids=new Set(top.map(h=>h.mid));
+    if(mids.size===1){ const h=top[0];
+      /* short numbers and person-level keys are suggestive, not conclusive */
+      const weak=best>=5;
+      return {mid:h.mid,store:h.store,txid:h.txid,key:h.key,val:h.val,
+              conf:weak?'Medium — راجعه':'High',lvl:weak?1:0}; }
+    return {mid:'CONFLICT',store:'',txid:'',key:'مفاتيح متعارضة',val:[...mids].join(' | '),conf:'',lvl:3};
+  }
+  /* merchant-level identifier: right answer for the merchant, but it does not
+     identify the individual transaction, so it never claims High */
+  if(opts.merchant&&idx.midMap&&idx.midMap.size){
+    const mh=new Map();
+    for(const v of cells){
+      if(v==null||v instanceof Date) continue;
+      const str=String(v);
+      const toks=str.match(/\d{6,12}/g); if(!toks) continue;
+      for(const t of toks){
+        for(const cut of [t,t.slice(0,-1),t.slice(0,-2)]){
+          if(cut.length<6) continue;
+          const e=idx.midMap.get(cut);
+          if(e) mh.set(e.mid,{store:e.store,val:t});
+        }
+      }
+    }
+    if(mh.size===1){ const e=[...mh][0];
+      return {mid:e[0],store:e[1].store,txid:'',key:'كود التاجر في اسم المتجر',val:e[1].val,conf:'Medium — تاجر مؤكد، المعاملة لأ',lvl:1}; }
+  }
+
+  const nameMids=()=>{
+    const m=new Map();
+    for(const v of cells){
+      /* a Date stringifies to "Mon Aug 10 2026 ... Coordinated Universal Time" —
+         never let that reach the name matcher */
+      if(v==null||v instanceof Date) continue;
+      const t=String(v).trim();
+      if(t.length<6||!/[a-z\u0600-\u06FF]/i.test(t)) continue;
+      for(const pk of namePairs(t)){ const e=idx.nmMap.get(pk); if(e) m.set([...e.mids][0],{val:t,store:e.store,txid:e.txid}); }
+    }
+    return m;
+  };
+  if(opts.amt){
+    let dt=null;
+    for(const v of cells){ const d=toDate(v); if(d&&d.getFullYear()>2000&&d.getFullYear()<2100){ dt=d; break; } }
+    const nm=opts.nameTie?nameMids():new Map();
+    for(const v of cells){
+      const n=toNum(v); if(n==null||Math.abs(n)<1) continue;
+      const list=idx.amtMap.get(Math.round(Math.abs(n)*100)); if(!list) continue;
+      let c=list;
+      if(dt) c=list.filter(x=>x.dt&&Math.abs(dt-x.dt)<=opts.tol*DAY);
+      if(!c.length) continue;
+      const mids=new Set(c.map(x=>x.mid));
+      if(mids.size===1) return {mid:c[0].mid,store:c[0].store,txid:c[0].txid,key:'المبلغ والتاريخ',val:String(n),conf:'Medium — راجعه',lvl:1};
+      if(nm.size){
+        const inter=[...mids].filter(m=>nm.has(m));
+        if(inter.length===1){ const g=nm.get(inter[0]);
+          return {mid:inter[0],store:g.store,txid:g.txid,key:'المبلغ والتاريخ والاسم',val:n+' · '+g.val,conf:'Medium — راجعه',lvl:1}; }
+      }
+    }
+  }
+  if(opts.nameOnly){
+    const nh=nameMids();
+    if(nh.size===1){ const e=[...nh][0];
+      return {mid:e[0],store:e[1].store,txid:e[1].txid,key:'اسم العميل فقط',val:e[1].val,conf:'Low — تأكيد إلزامي',lvl:2}; }
+  }
+  return {mid:'NOT FOUND',store:'',txid:'',key:'مفيش مطابقة',val:'',conf:'',lvl:3};
+}
+
+/* ---------- where to write the answers ---------- */
+const SLOT=[
+  ['mid',   /^(merchant\s*id|mid)$/i,                      'MID'],
+  ['store', /^store\s*name$/i,                             'Store Name (Kashier)'],
+  ['txid',  /^(kashier\s*transaction\s*id|transaction\s*id)$/i,'Transaction ID (Kashier)'],
+  ['key',   /^match\s*key$/i,                              'Match Key'],
+  ['val',   /^matched\s*value$/i,                          'Matched Value'],
+  ['conf',  /^confidence$/i,                               'Confidence']
+];
+/* the bank/wallet statement carries its own reconciliation flag — flip it in place */
+const STATUSRX=/^(status|staus|match\s*status|reconcilation|reconciliation)$/i;
+function planCols(head){
+  const plan={}; let next=head.length;
+  plan._status=head.findIndex(h=>STATUSRX.test(String(h||'').trim()));
+  SLOT.forEach(sl=>{
+    const i=head.findIndex(h=>sl[1].test(String(h||'').trim()));
+    if(i>=0&&i!==plan._status) plan[sl[0]]={col:i,existing:true};
+    else plan[sl[0]]={col:next++,existing:false,label:sl[2]};
+  });
+  return {plan,width:next};
+}
+
+
+/* ==================== i18n ==================== */
+const DICT={
+ar:{},
+en:{
+ brandsub:'Kashier · Financial Operations',
+ navRun:'Match', navHist:'Log',
+ h_run:'MID Matching',
+ sub_run:'Like XLOOKUP, except you don\'t have to tell it what to look up. It reads every cell in the provider or bank sheet, tries it against every key in the portal export, and drops the MID, store name and transaction ID into place.',
+ h_hist:'Run Log',
+ sub_hist:'Every match is recorded with its date and time, along with each row that came back without a MID. The log is stored in this browser on this device and is never sent anywhere.',
+ c1:'Portal export', c2:'Sheet to fill', c3:'How to search',
+ h1:'Transaction export from Kashier. This is the source of the MIDs. You can upload more than one. For files above 80 MB export as <b>CSV</b> — it is read as a stream instead of being loaded whole into memory.',
+ h2:'A BNPL provider sheet, or a bank/wallet statement. All tabs are processed. If the file has empty <code>Merchant ID</code>, <code>Store Name</code> or <code>Kashier Transaction ID</code> columns they are filled in place, and the <code>Status</code> column is flipped to <code>MATCHED</code>.',
+ h3:'Pick one. The difference: will you accept a result that pins down the <b>transaction</b>, or is pinning down the <b>merchant</b> enough.',
+ drop:'Drag a file here, or click to choose',
+ m1:'Exact', m1d:'Transaction keys only — loan number, gateway reference, RRN, auth code with amount.', m1t:'Zero errors across every test',
+ m2:'Balanced <em>— recommended</em>', m2d:'Everything Exact does, plus: when the transaction is absent it identifies the merchant from the code inside the store name, or from a mapping learned off the rows that did resolve.', m2t:'Merchant certain · transaction not',
+ m3:'Wide', m3d:'Adds guessing by amount, date and customer name. Fills more rows, but returns wrong answers.', m3t:'78% accurate on card data — manual review only',
+ btnRun:'Run matching', adv:'Advanced settings',
+ o1:'Set Status column to MATCHED', o2:'Save this run to the log', o3:'Light mode for very large files',
+ o4:'Date tolerance ±', o4b:'days', o5:'Minimum key length',
+ c_ladder:'How the rows resolved', h_ladder:'If most rows land near the bottom, the problem is the portal export, not the matching.',
+ c_res:'Results',
+ qph:'Search any column — number, name, MID…', hqph:'Search the log…',
+ fConf:'All confidence levels', fKey:'All keys', fMid:'All merchants', fDate:'All dates', onlyMiss:'Unmatched only',
+ dlAll:'Download full file', dlMiss:'Export unmatched only', dlView:'Export current view',
+ c_miss:'Rows that returned no MID', h_miss:'Collected across every run. You can export them as one file and send it to the provider or the technical team.',
+ dlHist:'Export whole log', clrHist:'Clear log',
+ foot:'MIDLink · everything is processed on your device and never leaves it',
+ /* dynamic */
+ kRows:'Rows', kMatched:'Matched', kCov:'Coverage', kKeys:'Keys indexed', kPortal:'Portal rows',
+ kRuns:'Saved runs', kMiss:'Rows without MID', kLast:'Last run',
+ L1:'Transaction pinned down', L1d:'Gateway reference · loan number · RRN · auth code with amount',
+ L2:'Merchant only', L2d:'Merchant code inside the name, or a mapping learned from resolved rows',
+ L3:'Guessed by name', L3d:'Needs manual confirmation',
+ L4:'No match', L4d:'Not present in the portal export',
+ tabOf:'of', noRows:'No rows match these filters', noRuns:'No saved runs yet',
+ runsN:'runs', missN:'rows without MID', allMatched:'Every row matched in this run',
+ showing:'Showing first 200 of', exportLog:'— export the log to see them all',
+ mode:'Mode', portal:'Portal', rowsW:'rows', matchedW:'matched', txW:'transaction', merW:'merchant',
+ colDate:'Run time', colDay:'Day', colFile:'File', colTab:'Tab',
+ hRun:'Run time', hMode:'Mode', hPortal:'Portal file', hTarget:'Target file', hTotal:'Total rows',
+ hExact:'Transaction', hMer:'Merchant', hGuess:'Guess', hMissing:'No MID', hPRows:'Portal rows', hFrom:'From', hTo:'To',
+ confirmClear:'This will permanently erase the whole log. Are you sure?',
+ emptyLog:'The log is empty.', allMatchedAlert:'Every row matched — nothing to export.',
+ errRun:'Something went wrong while processing: ',
+ pIndex:'Indexing portal', pRead:'Reading ', bIndex:'Indexing portal export…', bMatch:'Matching…',
+ thMID:'MID', thStore:'Merchant', thTx:'Transaction ID', thKey:'Key', thConf:'Confidence'
+}};
+/* engine strings -> English */
+const KMAP={
+ 'مفاتيح متعارضة':'Conflicting keys',
+ 'كود التاجر في اسم المتجر':'Merchant code in store name',
+ 'المبلغ والتاريخ':'Amount + date',
+ 'المبلغ والتاريخ والاسم':'Amount + date + name',
+ 'اسم العميل فقط':'Customer name only',
+ 'مفيش مطابقة':'No match',
+ 'رقم التاجر لدى البنك (مستنتج)':'Bank merchant number (inferred)',
+ 'High':'High',
+ 'Medium — راجعه':'Medium — review',
+ 'Medium — تاجر مؤكد، المعاملة لأ':'Medium — merchant certain, transaction not',
+ 'Low — تأكيد إلزامي':'Low — must confirm'
+};
+if(typeof XLSX==='undefined')
+ alert('محرك قراءة الإكسل مابدأش. النسخة دي من الملف ممكن تكون ناقصة — نزّلها تاني.');
+let LANG='ar';
+function T(k){ return (LANG==='en'&&DICT.en[k])?DICT.en[k]:null; }
+function tk(v){ if(LANG!=='en'||!v) return v;
+  if(KMAP[v]) return KMAP[v];
+  return String(v).replace(' + المبلغ',' + Amount'); }
+function applyLang(l){
+  LANG=(l==='en')?'en':'ar';
+  try{ localStorage.setItem('midlink.lang',LANG); }catch(e){}
+  document.documentElement.setAttribute('lang',LANG);
+  document.documentElement.setAttribute('dir',LANG==='en'?'ltr':'rtl');
+  document.querySelectorAll('.wrap').forEach(w=>w.setAttribute('dir',LANG==='en'?'ltr':'rtl'));
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    if(!el.dataset.ar) el.dataset.ar=el.innerHTML;
+    el.innerHTML = LANG==='en' ? (DICT.en[el.dataset.i18n]||el.dataset.ar) : el.dataset.ar;
+  });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el=>{
+    if(!el.dataset.arph) el.dataset.arph=el.placeholder;
+    el.placeholder = LANG==='en' ? (DICT.en[el.dataset.i18nPh]||el.dataset.arph) : el.dataset.arph;
+  });
+  $('#langAr').classList.toggle('on',LANG==='ar');
+  $('#langEn').classList.toggle('on',LANG==='en');
+  if(RESULT) paint();
+  if($('#viewHist').classList.contains('on')) paintHist();
+}
+
+/* ==================== theme ==================== */
+const SUN='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"/></svg>';
+const MOON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 14.5A8.5 8.5 0 019.5 4a8.5 8.5 0 1010.5 10.5z"/></svg>';
+function applyTheme(t){
+  document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light');
+  $('#themeBtn').innerHTML = t==='dark'?SUN:MOON;
+  try{ localStorage.setItem('midlink.theme',t); }catch(e){}
+}
+(function(){ let t='light'; try{ t=localStorage.getItem('midlink.theme')|| (matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'); }catch(e){}
+  applyTheme(t); })();
+$('#themeBtn').onclick=()=>applyTheme(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark');
+
+function setView(v){
+  $('#viewRun').classList.toggle('on',v==='run');
+  $('#viewHist').classList.toggle('on',v==='hist');
+  $('#navRun').classList.toggle('on',v==='run');
+  $('#navHist').classList.toggle('on',v==='hist');
+  if(v==='hist') paintHist();
+}
+
+/* ==================== history store ==================== */
+const HK='midlink.history';
+function loadHist(){ try{ return JSON.parse(localStorage.getItem(HK)||'[]'); }catch(e){ return []; } }
+function saveHist(h){
+  try{ localStorage.setItem(HK,JSON.stringify(h)); }
+  catch(e){ /* quota: drop oldest until it fits */
+    while(h.length>1){ h.shift(); try{ localStorage.setItem(HK,JSON.stringify(h)); return; }catch(e2){} }
+  }
+}
+function histBadge(){
+  const n=loadHist().reduce((a,r)=>a+(r.missing?r.missing.length:0),0);
+  $('#histBadge').textContent=n;
+}
+function stamp(d){
+  const p=n=>String(n).padStart(2,'0');
+  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes());
+}
+function recordRun(){
+  if(!$('#optSave').checked) return;
+  const now=new Date(), S=RESULT.sheets;
+  const missing=[];
+  S.forEach(s=>{
+    const P=s.pc.plan;
+    const idCols=s.head.map((h,i)=>({h,i}))
+      .filter(x=>x.h && !/^(match key|matched value|confidence|store name \(kashier\)|transaction id \(kashier\))$/i.test(x.h))
+      .slice(0,6);
+    s.rows.forEach(o=>{
+      if(!o.res||o.res.mid!=='NOT FOUND') return;
+      const rec={sheet:s.name,file:s.file,cells:{}};
+      idCols.forEach(x=>{ const v=o.row[x.i];
+        if(v!=null&&String(v).trim()!=='') rec.cells[x.h]=v instanceof Date?v.toISOString().slice(0,10):String(v).slice(0,60); });
+      missing.push(rec);
+    });
+  });
+  const c=[0,1,2,3].map(i=>S.reduce((a,s)=>a+s.counts[i],0));
+  const h=loadHist();
+  h.push({
+    id:Date.now(), at:stamp(now), date:now.toISOString().slice(0,10),
+    portal:portalFiles.map(f=>f.name), target:provFiles.map(f=>f.name),
+    mode:(document.querySelector('input[name=mode]:checked')||{}).value||'balanced',
+    total:c[0]+c[1]+c[2]+c[3], exact:c[0], merchant:c[1], guess:c[2],
+    portalRows:IDX.rows,
+    portalFrom:IDX.dMin?IDX.dMin.toISOString().slice(0,10):'', portalTo:IDX.dMax?IDX.dMax.toISOString().slice(0,10):'',
+    missing:missing.slice(0,4000)
+  });
+  while(h.length>40) h.shift();
+  saveHist(h); histBadge();
+}
+
+/* ==================== file pickers ==================== */
+let portalFiles=[],provFiles=[],IDX=null,RESULT=null,activeTab=0;
+function bindDrop(dropId,inputId,arr,listId){
+  const d=$(dropId),i=$(inputId);
+  d.onclick=()=>i.click();
+  d.ondragover=e=>{e.preventDefault();d.classList.add('over')};
+  d.ondragleave=()=>d.classList.remove('over');
+  d.ondrop=e=>{e.preventDefault();d.classList.remove('over');[...e.dataTransfer.files].forEach(f=>arr.push(f));render();preload()};
+  i.onchange=e=>{[...e.target.files].forEach(f=>arr.push(f));render();preload()};
+  async function preload(){
+    for(const f of arr){
+      if(f._buf||f._err||f.size>250*1048576) continue;
+      try{ f._buf=await f.arrayBuffer(); }catch(e){ f._err=e.message||'unreadable'; }
+    }
+    render();
+  }
+  function render(){
+    const ul=$(listId); ul.innerHTML='';
+    arr.forEach((f,ix)=>{
+      const mb=f.size/1048576, big=mb>80&&!isCSV(f);
+      const note=f._err?' · تعذّرت القراءة — ارفعه تاني':(big?' · حوّله CSV':'');
+      const li=document.createElement('li');
+      li.innerHTML='<span class="nm">'+f.name+'</span><span class="meta'+((big||f._err)?' big':'')+'">'+
+        (mb<1?(f.size/1024).toFixed(0)+' KB':mb.toFixed(1)+' MB')+note+'</span>';
+      const b=document.createElement('button'); b.textContent='×';
+      b.onclick=()=>{arr.splice(ix,1);render()};
+      li.appendChild(b); ul.appendChild(li);
+    });
+    $('#run').disabled=!(portalFiles.length&&provFiles.length);
+    if(arr.some(f=>f.size>80*1048576)) $('#optLite').checked=true;
+  }
+  return render;
+}
+bindDrop('#dropA','#fileA',portalFiles,'#listA');
+bindDrop('#dropB','#fileB',provFiles,'#listB');
+function prog(t,p){ $('#prog').classList.add('on'); $('#progText').textContent=t; $('#progBar').style.width=(p*100).toFixed(0)+'%'; }
+
+/* ==================== run ==================== */
+$('#run').onclick=async()=>{
+  const btn=$('#run'); btn.disabled=true;
+  try{
+    const mode=(document.querySelector('input[name=mode]:checked')||{}).value||'balanced';
+    const opts={merchant:mode!=='strict',amt:mode==='wide',nameTie:mode==='wide',nameOnly:false,
+                lite:$('#optLite').checked,tol:+$('#tol').value||0,minLen:+$('#minLen').value||5};
+    btn.textContent='بيفهرس ملف البورتال…';
+    IDX=await buildIndex(portalFiles,opts,p=>prog('فهرسة البورتال',p));
+    btn.textContent='بيطابق…';
+    const sheets=[];
+    for(let fi=0;fi<provFiles.length;fi++){
+      const f=provFiles[fi];
+      await eachSheet(f,(sn,rr)=>{
+        if(!rr.length) return;
+        const h=findHeader(rr), head=(rr[h]||[]).map(v=>String(v==null?'':v).trim());
+        const pc=planCols(head), out=[], counts=[0,0,0,0,0]; let outside=0;
+        for(let r=h+1;r<rr.length;r++){
+          const row=rr[r]||[];
+          if(row.filter(v=>v!==null&&String(v).trim()!=='').length===0){ out.push({row,res:null}); continue; }
+          const probe=row.map((v,i)=>{
+            if(i===pc.plan._status) return null;
+            for(const k in pc.plan) if(pc.plan[k]&&pc.plan[k].existing&&pc.plan[k].col===i) return null;
+            return v;
+          });
+          const res=matchRow(probe,IDX,opts);
+          counts[res.lvl]++; if(res.mid==='CONFLICT') counts[4]++;
+          if(res.lvl===3&&IDX.dMin){
+            for(const v of row){ const d=toDate(v);
+              if(d&&d.getFullYear()>2000&&d.getFullYear()<2100){ if(d<IDX.dMin||d>IDX.dMax) outside++; break; } }
+          }
+          out.push({row,res});
+        }
+        const MNRX=/^(merchant\s*(number|no|code)|terminal\s*(id|number))$/i;
+        const mnCols=head.map((x,i)=>MNRX.test(x)?i:-1).filter(i=>i>=0);
+        if(opts.merchant&&mnCols.length){
+          const learn=new Map();
+          out.forEach(o=>{ if(!o.res||o.res.lvl!==0) return;
+            mnCols.forEach(ci=>{ const k=String(o.row[ci]==null?'':o.row[ci]).trim(); if(!k) return;
+              let e=learn.get(k); if(!e){e={mids:new Set(),store:o.res.store};learn.set(k,e);} e.mids.add(o.res.mid); });
+          });
+          out.forEach(o=>{ if(!o.res||o.res.mid!=='NOT FOUND') return;
+            for(const ci of mnCols){ const k=String(o.row[ci]==null?'':o.row[ci]).trim();
+              const e=k&&learn.get(k);
+              if(e&&e.mids.size===1){
+                counts[o.res.lvl]--; o.res={mid:[...e.mids][0],store:e.store,txid:'',
+                  key:'رقم التاجر لدى البنك (مستنتج)',val:k,conf:'Medium — راجعه',lvl:1};
+                counts[1]++; break;
+              } }
+          });
+        }
+        sheets.push({file:f.name,name:sn,head,headRow:h,rows:out,counts,all:rr,pc,outside});
+      },p=>prog('قراءة '+f.name,p));
+    }
+    RESULT={sheets,opts}; activeTab=0;
+    recordRun();
+    paint(); $('#prog').classList.remove('on');
+    $('#out').scrollIntoView({behavior:'smooth',block:'start'});
+  }catch(e){ console.error(e); alert(whyFail(e)); $('#prog').classList.remove('on'); }
+  btn.disabled=false; btn.textContent='ابدأ المطابقة';
+};
+
+/* ==================== results ==================== */
+function paint(){
+  $('#out').classList.add('on');
+  const S=RESULT.sheets;
+  const tot=S.reduce((a,s)=>a+s.counts.slice(0,4).reduce((x,y)=>x+y,0),0);
+  const c=[0,1,2,3,4].map(i=>S.reduce((a,s)=>a+s.counts[i],0));
+  const matched=c[0]+c[1]+c[2];
+  $('#kpis').innerHTML=
+    '<div class="kpi"><div class="k">صفوف</div><div class="v">'+tot+'</div></div>'+
+    '<div class="kpi"><div class="k">مطابق</div><div class="v" style="color:var(--hi)">'+matched+'</div></div>'+
+    '<div class="kpi"><div class="k">التغطية</div><div class="v">'+(tot?(matched/tot*100).toFixed(1):0)+'%</div></div>'+
+    '<div class="kpi"><div class="k">مفاتيح مفهرسة</div><div class="v">'+IDX.idMap.size+'</div></div>'+
+    '<div class="kpi"><div class="k">صفوف البورتال</div><div class="v">'+IDX.rows+'</div></div>';
+  const rungs=[
+    ['المعاملة نفسها اتحددت','مرجع بوابة · رقم قرض · RRN · كود تفويض مع المبلغ',c[0],'c-high'],
+    ['التاجر بس اتحدد','كود التاجر في الاسم، أو ربط اتعلّم من صفوف اتحلّت',c[1],'c-med'],
+    ['تخمين بالاسم','يحتاج تأكيد يدوي',c[2],'c-none'],
+    ['مفيش مطابقة','مش موجود في تصدير البورتال',c[3],'c-none']];
+  $('#ladder').innerHTML=rungs.map(x=>
+    '<div class="rung '+x[3]+'"><div><div class="lbl">'+x[0]+'<small>'+x[1]+'</small></div>'+
+    '<div class="bar"><i style="width:'+(tot?x[2]/tot*100:0)+'%"></i></div></div>'+
+    '<div class="cnt">'+x[2]+'</div></div>').join('');
+  $('#tabs').innerHTML=S.map((s,i)=>{
+    const m=s.counts[0]+s.counts[1]+s.counts[2],t=s.counts.slice(0,4).reduce((a,b)=>a+b,0);
+    return '<button class="'+(i===activeTab?'on':'')+'" onclick="setTab('+i+')">'+s.name+'<span class="b">'+m+'/'+t+'</span></button>';
+  }).join('');
+  buildFilters(); paintTable();
+
+  const w=[];
+  if(IDX.idConf) w.push((LANG==='en'?'<b>'+IDX.idConf+' keys map to more than one MID</b> — dropped from the index rather than taking the first hit.':'<b>'+IDX.idConf+' مفتاح مرتبط بأكتر من MID</b> — اتشالوا من الفهرس بدل ما تتاخد أول نتيجة.'));
+  if(IDX.nmConf) w.push((LANG==='en'?'<b>'+IDX.nmConf+' names repeat across different MIDs</b> — also dropped.':'<b>'+IDX.nmConf+' اسم مكرر بميدات مختلفة</b> — اتشالوا كمان.'));
+  if(S.length>3) w.push((LANG==='en'?'<b>This file has '+S.length+' tabs</b> — if the extra tabs are duplicates of the same transactions, the total counts them more than once.':'<b>الملف فيه '+S.length+' تاب</b> — لو التابات الإضافية نسخ مكررة من نفس المعاملات، الإجمالي بيعدّها أكتر من مرة.'));
+  const outside=S.reduce((a,x)=>a+(x.outside||0),0);
+  if(outside) w.push((LANG==='en'?('<b>'+outside+' rows fall outside the portal export date range</b> ('+IDX.dMin.toISOString().slice(0,10)+' → '+IDX.dMax.toISOString().slice(0,10)+'). No key can ever match these — widen the export range.'):('<b>'+outside+' صف تاريخه خارج نطاق تصدير البورتال</b> ('+IDX.dMin.toISOString().slice(0,10)+' ← '+IDX.dMax.toISOString().slice(0,10)+'). الصفوف دي مستحيل تتطابق مهما جرّبت مفاتيح — وسّع نطاق التصدير.')));
+  if(c[4]) w.push((LANG==='en'?'<b>'+c[4]+' rows have conflicting keys</b> — the strongest key in the row pointed at more than one MID. The tool does not guess.':'<b>'+c[4]+' صف فيه مفاتيح متعارضة</b> — أقوى مفتاح في الصف طلع أكتر من MID. الأداة مبتخمّنش.'));
+  if(c[3]-c[4]>0) w.push((LANG==='en'?'<b>'+(c[3]-c[4])+' rows with no match</b> — check the export includes REFUND and Rejected rows. They have been written to today\'s log entry.':'<b>'+(c[3]-c[4])+' صف بدون مطابقة</b> — اتأكد إن التصدير شامل الـ REFUND والـ Rejected. اتسجّلوا في السجل بتاريخ النهاردة.'));
+  if(c[1]) w.push((LANG==='en'?'<b>'+c[1]+' rows resolved to a merchant only</b> — the MID is right, but the transaction itself is not in the export so Transaction ID is blank.':'<b>'+c[1]+' صف اتحدد التاجر بتاعه بس</b> — الـ MID صح، لكن المعاملة نفسها مش في التصدير فعمود Transaction ID فاضي.'));
+  if(c[2]) w.push((LANG==='en'?'<b>'+c[2]+' rows guessed by name</b> — review them manually.':'<b>'+c[2]+' صف اتخمّن بالاسم</b> — راجعهم يدوياً.'));
+  $('#warns').innerHTML=w.map(t=>'<div class="warn">'+t+'</div>').join('');
+}
+function buildFilters(){
+  const s=RESULT.sheets[activeTab];
+  const conf=new Set(),key=new Set(),mid=new Set();
+  s.rows.forEach(o=>{ if(!o.res) return; if(o.res.conf) conf.add(o.res.conf); key.add(o.res.key);
+    if(o.res.mid&&o.res.mid!=='NOT FOUND'&&o.res.mid!=='CONFLICT') mid.add(o.res.mid+(o.res.store?' — '+o.res.store:'')); });
+  const fill=(el,set,label)=>{ const cur=$(el).value;
+    $(el).innerHTML='<option value="">'+label+'</option>'+[...set].sort().map(v=>'<option>'+v+'</option>').join('');
+    if([...set].indexOf(cur)>=0) $(el).value=cur; };
+  fill('#fConf',conf,'كل مستويات الثقة'); fill('#fKey',key,'كل المفاتيح'); fill('#fMid',mid,'كل التجار');
+}
+function rowsFiltered(){
+  const s=RESULT.sheets[activeTab];
+  const q=$('#q').value.trim().toLowerCase();
+  const fc=$('#fConf').value, fk=$('#fKey').value, fm=$('#fMid').value;
+  const only=$('#fMiss').classList.contains('on');
+  return s.rows.filter(o=>{
+    if(!o.res) return false;
+    if(only&&o.res.mid!=='NOT FOUND'&&o.res.mid!=='CONFLICT') return false;
+    if(fc&&o.res.conf!==fc) return false;
+    if(fk&&o.res.key!==fk) return false;
+    if(fm&&(o.res.mid+(o.res.store?' — '+o.res.store:''))!==fm) return false;
+    if(q){
+      const hay=o.row.map(v=>v==null?'':(v instanceof Date?v.toISOString().slice(0,10):String(v))).join(' ').toLowerCase()
+        +' '+o.res.mid.toLowerCase()+' '+String(o.res.store||'').toLowerCase()+' '+String(o.res.txid||'').toLowerCase();
+      if(hay.indexOf(q)<0) return false;
+    }
+    return true;
+  });
+}
+function paintTable(){
+  if(!RESULT) return;
+  const s=RESULT.sheets[activeTab], list=rowsFiltered(), show=s.head.slice(0,3);
+  $('#fCount').textContent=list.length+' من '+s.rows.filter(o=>o.res).length;
+  $('#thead').innerHTML='<tr>'+show.map(h=>'<th>'+(h||'—')+'</th>').join('')+
+    '<th>MID</th><th>التاجر</th><th>Transaction ID</th><th>المفتاح</th><th>الثقة</th></tr>';
+  if(!list.length){ $('#tbody').innerHTML='<tr><td colspan="8"><div class="empty">مفيش صفوف مطابقة للفلاتر دي</div></td></tr>'; return; }
+  $('#tbody').innerHTML=list.slice(0,500).map(x=>{
+    const r=x.res, cls=r.conf.indexOf('High')===0?'p-high':(r.conf?'p-med':'p-none');
+    return '<tr>'+show.map((_,i)=>'<td>'+fmt(x.row[i])+'</td>').join('')+
+      '<td class="mono"><b>'+r.mid+'</b></td><td>'+(r.store||'')+'</td>'+
+      '<td class="mono" style="font-size:11.5px">'+(r.txid||'')+'</td>'+
+      '<td>'+r.key+'</td><td><span class="pill '+cls+'">'+(r.conf||'—')+'</span></td></tr>';
+  }).join('');
+}
+function fmt(v){ if(v==null) return ''; if(v instanceof Date) return v.toISOString().slice(0,10); return String(v).slice(0,30); }
+window.setTab=i=>{activeTab=i;
+  $('#tabs').querySelectorAll('button').forEach((b,k)=>b.classList.toggle('on',k===i));
+  buildFilters(); paintTable(); };
+
+/* ==================== export ==================== */
+function fill(s,rowsOnly){
+  const setStatus=$('#optStatus').checked;
+  const P=s.pc.plan;
+  const pick=rowsOnly?new Set(rowsOnly):null;
+  const aoa=[]; const hdr=(s.all[s.headRow]||[]).slice();
+  for(const k in P) if(P[k]&&P[k].existing===false) hdr[P[k].col]=P[k].label;
+  aoa.push(hdr);
+  let i=0;
+  for(let r=s.headRow+1;r<s.all.length;r++){
+    const it=s.rows[i++]; if(!it||!it.res) continue;
+    if(pick&&!pick.has(it)) continue;
+    const R=it.res, row=(s.all[r]||[]).slice();
+    row[P.mid.col]=R.mid; row[P.store.col]=R.store||'';
+    row[P.txid.col]=R.txid||''; row[P.key.col]=tk(R.key);
+    row[P.val.col]=R.val||''; row[P.conf.col]=tk(R.conf)||'';
+    if(setStatus&&P._status>=0&&R.mid!=='NOT FOUND'&&R.mid!=='CONFLICT')
+      row[P._status]=R.conf.indexOf('High')===0?'MATCHED':'NEEDS_REVIEW';
+    aoa.push(row);
+  }
+  return aoa;
+}
+function today(){ return new Date().toISOString().slice(0,10); }
+function saveBook(sheets,name){
+  const wb=XLSX.utils.book_new(), used=new Set();
+  sheets.forEach(x=>{
+    let nm=(x.name||'Sheet').replace(/[\\\/\?\*\[\]:]/g,'').slice(0,28)||'Sheet';
+    while(used.has(nm)) nm=nm.slice(0,26)+'_'+used.size;
+    used.add(nm);
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(x.aoa),nm);
+  });
+  XLSX.writeFile(wb,name);
+}
+$('#dl').onclick=()=>{
+  const one=RESULT.sheets.length===1&&RESULT.sheets[0].all.length>200000;
+  if(one){
+    const aoa=fill(RESULT.sheets[0]), parts=[]; let buf='';
+    aoa.forEach((row,i)=>{
+      buf+=row.map(v=>{ const s=v==null?'':(v instanceof Date?v.toISOString().slice(0,10):String(v));
+        return /[",\n]/.test(s)?'"'+s.split('"').join('""')+'"':s; }).join(',')+'\n';
+      if(i%20000===0){ parts.push(buf); buf=''; }
+    });
+    parts.push(buf);
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob(['\ufeff'].concat(parts),{type:'text/csv;charset=utf-8'}));
+    a.download='MIDLink_'+today()+'.csv'; a.click(); return;
+  }
+  saveBook(RESULT.sheets.map(s=>({name:s.name,aoa:fill(s)})),'MIDLink_matched_'+today()+'.xlsx');
+};
+$('#dlMiss').onclick=()=>{
+  const sh=RESULT.sheets.map(s=>({name:s.name,aoa:fill(s,s.rows.filter(o=>o.res&&(o.res.mid==='NOT FOUND'||o.res.mid==='CONFLICT')))}))
+    .filter(x=>x.aoa.length>1);
+  if(!sh.length){ alert(T('allMatchedAlert')||'كل الصفوف اتطابقت — مفيش حاجة تتصدّر.'); return; }
+  saveBook(sh,'MIDLink_unmatched_'+today()+'.xlsx');
+};
+$('#dlView').onclick=()=>{
+  const s=RESULT.sheets[activeTab];
+  saveBook([{name:s.name,aoa:fill(s,rowsFiltered())}],'MIDLink_view_'+today()+'.xlsx');
+};
+
+/* ==================== history view ==================== */
+function allMissing(){
+  const rows=[];
+  loadHist().forEach(r=>(r.missing||[]).forEach(m=>rows.push({at:r.at,date:r.date,sheet:m.sheet,file:m.file,cells:m.cells,target:(r.target||[]).join(', ')})));
+  return rows;
+}
+function paintHist(){
+  const h=loadHist(), miss=allMissing();
+  const dates=[...new Set(h.map(r=>r.date))].sort().reverse();
+  const cur=$('#hDate').value;
+  $('#hDate').innerHTML='<option value="">'+(T('fDate')||'كل التواريخ')+'</option>'+dates.map(d=>'<option>'+d+'</option>').join('');
+  if(dates.indexOf(cur)>=0) $('#hDate').value=cur;
+  $('#histKpis').innerHTML=
+    '<div class="kpi"><div class="k">تشغيلات محفوظة</div><div class="v">'+h.length+'</div></div>'+
+    '<div class="kpi"><div class="k">صفوف بدون MID</div><div class="v" style="color:var(--no)">'+miss.length+'</div></div>'+
+    '<div class="kpi"><div class="k">آخر تشغيل</div><div class="v" style="font-size:15px;padding-top:9px">'+(h.length?h[h.length-1].at:'—')+'</div></div>';
+  const q=$('#hq').value.trim().toLowerCase(), fd=$('#hDate').value;
+  const show=h.slice().reverse().filter(r=>{
+    if(fd&&r.date!==fd) return false;
+    if(!q) return true;
+    const hay=(r.at+' '+(r.target||[]).join(' ')+' '+(r.portal||[]).join(' ')+' '+
+      (r.missing||[]).map(m=>Object.values(m.cells).join(' ')).join(' ')).toLowerCase();
+    return hay.indexOf(q)>=0;
+  });
+  let n=0; show.forEach(r=>n+=(r.missing||[]).length);
+  $('#hCount').textContent=show.length+' '+(T('runsN')||'تشغيلة')+' · '+n+' '+(T('missN')||'صف بدون MID');
+  if(!show.length){ $('#histList').innerHTML='<div class="empty">'+(T('noRuns')||'مفيش تشغيلات محفوظة لحد دلوقتي')+'</div>'; return; }
+  $('#histList').innerHTML=show.map(r=>{
+    const cov=r.total?((r.exact+r.merchant+r.guess)/r.total*100).toFixed(1):0;
+    const nm=(r.missing||[]).length;
+    const keys=nm?Object.keys(r.missing[0].cells).slice(0,5):[];
+    const body=nm?('<div class="scroll" style="max-height:230px"><table class="miniT"><thead><tr>'+
+        keys.map(k=>'<th>'+k+'</th>').join('')+'<th>'+(T('colTab')||'التاب')+'</th></tr></thead><tbody>'+
+        r.missing.slice(0,200).map(m=>'<tr>'+keys.map(k=>'<td>'+(m.cells[k]||'')+'</td>').join('')+'<td>'+m.sheet+'</td></tr>').join('')+
+        '</tbody></table></div>'+(nm>200?'<div class="fcount" style="margin-top:8px">'+(T('showing')||'بيعرض أول 200 من')+' '+nm+' '+(T('exportLog')||'— صدّر السجل عشان تشوفهم كلهم')+'</div>':''))
+      :'<div class="empty">'+(T('allMatched')||'كل الصفوف اتطابقت في التشغيلة دي')+'</div>';
+    return '<div class="run-row" onclick="this.classList.toggle(\'open\')">'+
+      '<div class="run-head"><span class="d mono">'+r.at+'</span>'+
+      '<span class="f">'+(r.target||[]).join(', ')+'</span>'+
+      '<span class="s" style="color:var(--hi)">'+cov+'%</span>'+
+      '<span class="s" style="color:var(--no)">'+nm+' '+(T('hMissing')||'بدون MID')+'</span></div>'+
+      '<div class="run-body" onclick="event.stopPropagation()">'+
+      '<div class="fcount" style="margin-bottom:9px">'+(T('mode')||'الوضع')+': '+r.mode+' · '+(T('portal')||'البورتال')+': '+r.portalRows+' '+(T('rowsW')||'صف')+
+      (r.portalFrom?(' ('+r.portalFrom+' → '+r.portalTo+')'):'')+' · '+(T('matchedW')||'مطابق')+': '+r.exact+' '+(T('txW')||'معاملة')+' + '+r.merchant+' '+(T('merW')||'تاجر')+'</div>'+
+      body+'</div></div>';
+  }).join('');
+}
+$('#dlHist').onclick=()=>{
+  const rows=allMissing();
+  if(!rows.length){ alert(T('emptyLog')||'السجل فاضي.'); return; }
+  const cols=[...new Set(rows.flatMap(r=>Object.keys(r.cells)))];
+  const aoa=[[T('colDate')||'تاريخ التشغيل',T('colDay')||'اليوم',T('colFile')||'الملف',T('colTab')||'التاب'].concat(cols)];
+  rows.forEach(r=>aoa.push([r.at,r.date,r.target,r.sheet].concat(cols.map(c=>r.cells[c]||''))));
+  const runs=loadHist();
+  const aoa2=[[T('hRun')||'تاريخ التشغيل',T('hMode')||'الوضع',T('hPortal')||'ملف البورتال',T('hTarget')||'الملف المستهدف',
+    T('hTotal')||'إجمالي الصفوف',T('hExact')||'معاملة',T('hMer')||'تاجر',T('hGuess')||'تخمين',T('hMissing')||'بدون MID',
+    T('hPRows')||'صفوف البورتال',T('hFrom')||'من',T('hTo')||'إلى']];
+  runs.slice().reverse().forEach(r=>aoa2.push([r.at,r.mode,(r.portal||[]).join(', '),(r.target||[]).join(', '),
+    r.total,r.exact,r.merchant,r.guess,(r.missing||[]).length,r.portalRows,r.portalFrom,r.portalTo]));
+  saveBook([{name:'Missing MIDs',aoa},{name:'Runs',aoa:aoa2}],'MIDLink_history_'+today()+'.xlsx');
+};
+$('#clrHist').onclick=()=>{
+  if(!confirm(T('confirmClear')||'هيتمسح كل السجل نهائياً. متأكد؟')) return;
+  try{ localStorage.removeItem(HK); }catch(e){}
+  histBadge(); paintHist();
+};
+histBadge();
+
+</script>
