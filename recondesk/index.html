@@ -17,66 +17,66 @@
 /* ============ ReconDesk — dark-first token system ============ */
 :root{
   color-scheme: dark;
-  --ground:#0F161C; --surface:#151D24; --surface-2:#1B252E; --surface-3:#212D37;
-  --line:#25313B; --line-strong:#35444F;
-  --ink:#E6EDF3; --ink-dim:#93A4B1; --ink-faint:#6B7C89;
-  --brand:#C08430; --brand-soft:#3A2C14; --brand-ink:#E0B368;
-  --s-merchant:#4F8FD1; --s-bank:#C08430;
-  --st-matched:#3E9E78; --st-timing:#8B80D6; --st-break:#D05B4A; --st-pending:#7A8B99;
-  --st-matched-bg:#12291F; --st-timing-bg:#221F3A; --st-break-bg:#331815; --st-pending-bg:#1E262C;
-  --shadow:0 1px 2px rgba(0,0,0,.5), 0 8px 24px -12px rgba(0,0,0,.7);
-  --focus:#E0B368;
+  --ground:#F1F4F2; --surface:#FFFFFF; --surface-2:#F7F9F8; --surface-3:#EDF1EF;
+  --line:#DBE2DE; --line-strong:#C3CDC8;
+  --ink:#13201B; --ink-dim:#54635C; --ink-faint:#86938C;
+  --brand:#0C7A58; --brand-soft:#E3F1EB; --brand-ink:#075C42;
+  --s-merchant:#20548C; --s-bank:#0C7A58;
+  --st-matched:#15724F; --st-timing:#5D52B8; --st-break:#A82F28; --st-pending:#68756E;
+  --st-matched-bg:#E6F2EC; --st-timing-bg:#ECEAF8; --st-break-bg:#FAEAE8; --st-pending-bg:#EDF1EF;
+  --shadow:0 1px 2px rgba(19,32,27,.05),0 8px 22px -14px rgba(19,32,27,.35);
+  --focus:#075C42;
 }
 @media (prefers-color-scheme: light){
   :root:not([data-theme="dark"]){
     color-scheme: light;
-    --ground:#EFF0EC; --surface:#FBFAF7; --surface-2:#F3F3EF; --surface-3:#E9EAE4;
-    --line:#DCDDD6; --line-strong:#C0C2B8;
-    --ink:#161B1F; --ink-dim:#55606A; --ink-faint:#7C8892;
-    --brand:#A66A1E; --brand-soft:#F6EEDF; --brand-ink:#8A570F;
-    --s-merchant:#2E72B8; --s-bank:#A66A1E;
-    --st-matched:#2F8A63; --st-timing:#6B5FC4; --st-break:#BF4E3C; --st-pending:#66727C;
-    --st-matched-bg:#E4F1EA; --st-timing-bg:#ECEAF8; --st-break-bg:#FAE8E4; --st-pending-bg:#ECEEEF;
-    --shadow:0 1px 2px rgba(20,24,28,.06), 0 8px 24px -14px rgba(20,24,28,.22);
-    --focus:#8A570F;
+    --ground:#0D1512; --surface:#141E1A; --surface-2:#19251F; --surface-3:#1F2D26;
+    --line:#26332D; --line-strong:#35463E;
+    --ink:#E3ECE7; --ink-dim:#97A8A0; --ink-faint:#6E7F77;
+    --brand:#3FC694; --brand-soft:#133028; --brand-ink:#8FE0C0;
+    --s-merchant:#7FB0E6; --s-bank:#3FC694;
+    --st-matched:#53C98F; --st-timing:#9B92E0; --st-break:#F08A8A; --st-pending:#7E8F88;
+    --st-matched-bg:#12291F; --st-timing-bg:#221F3A; --st-break-bg:#2F1619; --st-pending-bg:#1F2D26;
+    --shadow:0 1px 2px rgba(0,0,0,.45),0 8px 22px -12px rgba(0,0,0,.6);
+    --focus:#8FE0C0;
   }
 }
 :root[data-theme="light"]{
   color-scheme: light;
-  --ground:#EFF0EC; --surface:#FBFAF7; --surface-2:#F3F3EF; --surface-3:#E9EAE4;
-  --line:#DCDDD6; --line-strong:#C0C2B8;
-  --ink:#161B1F; --ink-dim:#55606A; --ink-faint:#7C8892;
-  --brand:#A66A1E; --brand-soft:#F6EEDF; --brand-ink:#8A570F;
-  --s-merchant:#2E72B8; --s-bank:#A66A1E;
-  --st-matched:#2F8A63; --st-timing:#6B5FC4; --st-break:#BF4E3C; --st-pending:#66727C;
-  --st-matched-bg:#E4F1EA; --st-timing-bg:#ECEAF8; --st-break-bg:#FAE8E4; --st-pending-bg:#ECEEEF;
-  --shadow:0 1px 2px rgba(20,24,28,.06), 0 8px 24px -14px rgba(20,24,28,.22);
-  --focus:#8A570F;
+  --ground:#F1F4F2; --surface:#FFFFFF; --surface-2:#F7F9F8; --surface-3:#EDF1EF;
+  --line:#DBE2DE; --line-strong:#C3CDC8;
+  --ink:#13201B; --ink-dim:#54635C; --ink-faint:#86938C;
+  --brand:#0C7A58; --brand-soft:#E3F1EB; --brand-ink:#075C42;
+  --s-merchant:#20548C; --s-bank:#0C7A58;
+  --st-matched:#15724F; --st-timing:#5D52B8; --st-break:#A82F28; --st-pending:#68756E;
+  --st-matched-bg:#E6F2EC; --st-timing-bg:#ECEAF8; --st-break-bg:#FAEAE8; --st-pending-bg:#EDF1EF;
+  --shadow:0 1px 2px rgba(19,32,27,.05),0 8px 22px -14px rgba(19,32,27,.35);
+  --focus:#075C42;
 }
 /* in-app toggle wins over host + OS, both directions */
 :root[data-ui="dark"]{
   color-scheme: dark;
-  --ground:#0F161C; --surface:#151D24; --surface-2:#1B252E; --surface-3:#212D37;
-  --line:#25313B; --line-strong:#35444F;
-  --ink:#E6EDF3; --ink-dim:#93A4B1; --ink-faint:#6B7C89;
-  --brand:#C08430; --brand-soft:#3A2C14; --brand-ink:#E0B368;
-  --s-merchant:#4F8FD1; --s-bank:#C08430;
-  --st-matched:#3E9E78; --st-timing:#8B80D6; --st-break:#D05B4A; --st-pending:#7A8B99;
-  --st-matched-bg:#12291F; --st-timing-bg:#221F3A; --st-break-bg:#331815; --st-pending-bg:#1E262C;
-  --shadow:0 1px 2px rgba(0,0,0,.5), 0 8px 24px -12px rgba(0,0,0,.7);
-  --focus:#E0B368;
+  --ground:#0D1512; --surface:#141E1A; --surface-2:#19251F; --surface-3:#1F2D26;
+  --line:#26332D; --line-strong:#35463E;
+  --ink:#E3ECE7; --ink-dim:#97A8A0; --ink-faint:#6E7F77;
+  --brand:#3FC694; --brand-soft:#133028; --brand-ink:#8FE0C0;
+  --s-merchant:#7FB0E6; --s-bank:#3FC694;
+  --st-matched:#53C98F; --st-timing:#9B92E0; --st-break:#F08A8A; --st-pending:#7E8F88;
+  --st-matched-bg:#12291F; --st-timing-bg:#221F3A; --st-break-bg:#2F1619; --st-pending-bg:#1F2D26;
+  --shadow:0 1px 2px rgba(0,0,0,.45),0 8px 22px -12px rgba(0,0,0,.6);
+  --focus:#8FE0C0;
 }
 :root[data-ui="light"]{
   color-scheme: light;
-  --ground:#EFF0EC; --surface:#FBFAF7; --surface-2:#F3F3EF; --surface-3:#E9EAE4;
-  --line:#DCDDD6; --line-strong:#C0C2B8;
-  --ink:#161B1F; --ink-dim:#55606A; --ink-faint:#7C8892;
-  --brand:#A66A1E; --brand-soft:#F6EEDF; --brand-ink:#8A570F;
-  --s-merchant:#2E72B8; --s-bank:#A66A1E;
-  --st-matched:#2F8A63; --st-timing:#6B5FC4; --st-break:#BF4E3C; --st-pending:#66727C;
-  --st-matched-bg:#E4F1EA; --st-timing-bg:#ECEAF8; --st-break-bg:#FAE8E4; --st-pending-bg:#ECEEEF;
-  --shadow:0 1px 2px rgba(20,24,28,.06), 0 8px 24px -14px rgba(20,24,28,.22);
-  --focus:#8A570F;
+  --ground:#F1F4F2; --surface:#FFFFFF; --surface-2:#F7F9F8; --surface-3:#EDF1EF;
+  --line:#DBE2DE; --line-strong:#C3CDC8;
+  --ink:#13201B; --ink-dim:#54635C; --ink-faint:#86938C;
+  --brand:#0C7A58; --brand-soft:#E3F1EB; --brand-ink:#075C42;
+  --s-merchant:#20548C; --s-bank:#0C7A58;
+  --st-matched:#15724F; --st-timing:#5D52B8; --st-break:#A82F28; --st-pending:#68756E;
+  --st-matched-bg:#E6F2EC; --st-timing-bg:#ECEAF8; --st-break-bg:#FAEAE8; --st-pending-bg:#EDF1EF;
+  --shadow:0 1px 2px rgba(19,32,27,.05),0 8px 22px -14px rgba(19,32,27,.35);
+  --focus:#075C42;
 }
 
 *{box-sizing:border-box}

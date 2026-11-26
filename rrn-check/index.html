@@ -6,36 +6,37 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="vendor/xlsx.full.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 /* Colour in this page means one thing: whether the money arrived.
    Everything structural stays neutral so anything coloured is a fact. */
 :root{
-  --paper:#F2F5F8; --card:#FFFFFF; --sunk:#E9EEF3;
-  --ink:#17222E; --ink2:#2E3D4E; --mute:#5B6B7C; --faint:#8798A9;
-  --rule:#D5DDE6; --hair:#E6ECF1;
-  --owed:#A8202B;    --owedbg:#FBEFF0;
-  --settled:#15694A; --settledbg:#EBF4F0;
-  --open:#8A6B1F;    --openbg:#FAF3E4;
-  --focus:#2563A8;
+  --paper:#F1F4F2; --card:#FFFFFF; --sunk:#F7F9F8;
+  --ink:#13201B; --ink2:#54635C; --mute:#54635C; --faint:#86938C;
+  --rule:#DBE2DE; --hair:#EAEFEC;
+  --owed:#A82F28;    --owedbg:#FAEAE8;
+  --settled:#15724F; --settledbg:#E6F2EC;
+  --open:#8A6514;    --openbg:#FBF2DE;
+  --focus:#0C7A58;
   --r:6px;
 }
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]){
-  --paper:#0F161D; --card:#161F29; --sunk:#111922;
-  --ink:#E7EEF5; --ink2:#C2CFDC; --mute:#8CA0B3; --faint:#6B7E92;
-  --rule:#26323E; --hair:#1D2832;
-  --owed:#F08C8C;    --owedbg:#2A1618;
-  --settled:#6CC8A1; --settledbg:#12251F;
-  --open:#DBBA6B;    --openbg:#251F14;
-  --focus:#6AA5E8;
+  --paper:#0D1512; --card:#141E1A; --sunk:#19251F;
+  --ink:#E3ECE7; --ink2:#97A8A0; --mute:#97A8A0; --faint:#6E7F77;
+  --rule:#26332D; --hair:#1E2A24;
+  --owed:#F08A8A;    --owedbg:#2F1619;
+  --settled:#53C98F; --settledbg:#12291F;
+  --open:#E0AC4B;    --openbg:#2B2410;
+  --focus:#3FC694;
 }}
 :root[data-theme=dark]{
-  --paper:#0F161D; --card:#161F29; --sunk:#111922;
-  --ink:#E7EEF5; --ink2:#C2CFDC; --mute:#8CA0B3; --faint:#6B7E92;
-  --rule:#26323E; --hair:#1D2832;
-  --owed:#F08C8C;    --owedbg:#2A1618;
-  --settled:#6CC8A1; --settledbg:#12251F;
-  --open:#DBBA6B;    --openbg:#251F14;
-  --focus:#6AA5E8;
+  --paper:#F1F4F2; --card:#FFFFFF; --sunk:#F7F9F8;
+  --ink:#13201B; --ink2:#54635C; --mute:#54635C; --faint:#86938C;
+  --rule:#DBE2DE; --hair:#EAEFEC;
+  --owed:#A82F28;    --owedbg:#FAEAE8;
+  --settled:#15724F; --settledbg:#E6F2EC;
+  --open:#8A6514;    --openbg:#FBF2DE;
+  --focus:#0C7A58;
 }
 
 *{box-sizing:border-box}
