@@ -1,0 +1,2734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wallet Reconciliation</title>
+<link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiByb2xlPSJpbWciIGFyaWEtbGFiZWw9IldhbGxldCBSZWNvbmNpbGlhdGlvbiI+IDxyZWN0IHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgcng9IjUuNSIgZmlsbD0iIzJFNEE4RSIvPiA8cGF0aCBkPSJNMTIgMy42djE2LjgiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLW9wYWNpdHk9Ii41NSIgc3Ryb2tlLXdpZHRoPSIxLjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPiA8cmVjdCB4PSI0LjYiIHk9IjguMSIgd2lkdGg9IjUuNiIgaGVpZ2h0PSIyLjgiIHJ4PSIxLjQiIGZpbGw9IiNmZmYiLz4gPHJlY3QgeD0iMTMuOCIgeT0iOC4xIiB3aWR0aD0iNS42IiBoZWlnaHQ9IjIuOCIgcng9IjEuNCIgZmlsbD0iI2ZmZiIvPiA8cmVjdCB4PSI0LjYiIHk9IjEzLjEiIHdpZHRoPSI1LjYiIGhlaWdodD0iMi44IiByeD0iMS40IiBmaWxsPSIjZmZmIi8+IDxyZWN0IHg9IjEzLjgiIHk9IjEzLjEiIHdpZHRoPSI1LjYiIGhlaWdodD0iMi44IiByeD0iMS40IiBmaWxsPSIjZmZmIi8+IDwvc3ZnPg==">
+<style>
+:root{
+  --bg:#E9ECF0; --surface:#FFFFFF; --surface-2:#F5F7FA; --surface-3:#EDF1F6;
+  --line:#DBE0E8; --line-soft:#EAEEF3;
+  --ink:#14181F; --ink-2:#4C5563; --ink-3:#7E8794;
+  --accent:#2E4A8E; --accent-soft:#E8EDF8; --accent-ink:#2E4A8E;
+  --alert:#A03C1C; --alert-soft:#FAEBE4;
+  --clear:#135E52; --clear-soft:#E1F0EC;
+  --pending:#7A5B12; --pending-soft:#FAF0DC;
+  --shadow:0 1px 2px rgba(20,24,31,.05), 0 10px 24px -18px rgba(20,24,31,.5);
+  --mono:ui-monospace,"Cascadia Mono","SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+  --r:4px;
+}
+[data-theme="dark"]{
+  --bg:#10131A; --surface:#181C24; --surface-2:#1E232C; --surface-3:#232935;
+  --line:#2C3441; --line-soft:#232A34;
+  --ink:#E9EDF4; --ink-2:#A5AEBD; --ink-3:#707A8A;
+  --accent:#83A2EE; --accent-soft:#1B2437; --accent-ink:#A8BEF5;
+  --alert:#ED8A6C; --alert-soft:#2D1C16;
+  --clear:#4CC0A6; --clear-soft:#10282A;
+  --pending:#D9B45E; --pending-soft:#2A2314;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 12px 26px -18px rgba(0,0,0,.9);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--ink); font-family:var(--sans); font-size:14px; line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:0 22px 76px}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.eyebrow{font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3)}
+::selection{background:var(--accent-soft);color:var(--accent-ink)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* ── masthead ─────────────────────────────── */
+.bar{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+.bar .inner{max-width:1180px;margin:0 auto;padding:13px 22px;display:flex;align-items:center;gap:13px}
+.bar h1{margin:0;font-size:13px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;white-space:nowrap}
+.bar .mark{flex:none;display:block}
+.mark-tile{fill:var(--accent)}
+.mark-bar{fill:var(--surface)}
+.mark-seam{stroke:var(--surface);stroke-opacity:.55}
+[data-theme="dark"] .mark-bar{fill:var(--bg)}
+[data-theme="dark"] .mark-seam{stroke:var(--bg);stroke-opacity:.5}
+.bar .tag{font-family:var(--mono);font-size:11px;color:var(--ink-3);white-space:nowrap}
+.switch{margin-left:auto;display:inline-flex;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;flex:none}
+.switch button{border:0;background:var(--surface-2);color:var(--ink-3);cursor:pointer;padding:6px 15px;
+  font-family:var(--sans);font-size:10.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase}
+.switch button + button{border-left:1px solid var(--line)}
+.switch button:hover{color:var(--ink)}
+.switch button[aria-pressed="true"]{background:var(--accent);color:#fff}
+[data-theme="dark"] .switch button[aria-pressed="true"]{color:var(--bg)}
+.themebtn{border:1px solid var(--line);background:var(--surface-2);color:var(--ink-2);cursor:pointer;
+  width:32px;height:30px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;flex:none}
+.themebtn:hover{border-color:var(--accent);color:var(--accent-ink)}
+
+/* ── intake ───────────────────────────────── */
+.intake{margin-top:24px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+.drop{padding:38px 26px;text-align:center;border:1px dashed var(--line);border-radius:var(--r);margin:12px;cursor:pointer;transition:border-color .15s,background .15s}
+.drop:hover,.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.drop h2{margin:13px 0 4px;font-size:15px;font-weight:600}
+.drop p{margin:0;color:var(--ink-2);font-size:13px}
+.drop .cta{display:inline-block;margin-top:12px;font-size:10.5px;font-weight:600;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--accent-ink);border-bottom:1px solid currentColor;padding-bottom:2px}
+.drop.compact{padding:12px 26px;margin:12px 12px 0}
+.drop.compact svg,.drop.compact p{display:none}
+.drop.compact h2{margin:0;font-size:12px;font-weight:600;color:var(--ink-2);display:inline}
+.drop.compact .cta{margin:0 0 0 10px;font-size:10px}
+
+.rail{display:flex;flex-wrap:wrap;gap:8px;padding:12px}
+.chip{display:flex;align-items:stretch;border:1px solid var(--line);background:var(--surface-2);
+  border-radius:var(--r);overflow:hidden;max-width:100%}
+.chip .role-pick{font-family:var(--sans);font-size:9.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+  color:#fff;background:var(--accent);border:0;padding:0 6px;cursor:pointer;border-radius:0;appearance:none;
+  text-align:center;flex:none}
+[data-theme="dark"] .chip .role-pick{color:var(--bg)}
+.chip .dy{font-family:var(--mono);font-size:11px;color:var(--ink-2);white-space:nowrap;
+  padding:6px 0 6px 11px;display:flex;align-items:center}
+.chip .nm{font-family:var(--mono);font-size:11px;max-width:190px;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;color:var(--ink-3);padding:6px 0 6px 10px;display:flex;align-items:center}
+.chip .x{border:0;background:none;color:var(--ink-3);cursor:pointer;font-size:15px;line-height:1;padding:0 10px 0 12px}
+.chip .x:hover{color:var(--alert)}
+.rail .add{border:1px dashed var(--line);color:var(--ink-2);cursor:pointer;background:none;border-radius:var(--r);
+  font-family:var(--sans);font-size:10.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:7px 14px}
+.rail .add:hover{border-color:var(--accent);color:var(--accent-ink)}
+
+/* ── summary band ─────────────────────────── */
+.band{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);
+  border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin-top:16px}
+.band .cell{padding:15px 18px;background:var(--surface);border-left:3px solid transparent}
+.band .v{font-family:var(--mono);font-size:27px;font-variant-numeric:tabular-nums;letter-spacing:-.035em;line-height:1.08}
+.band .k{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--ink-3);margin-top:6px}
+.band .cell.flag{border-left-color:var(--alert);background:var(--alert-soft)}
+.band .cell.flag .v{color:var(--alert)}
+.band .cell.good{border-left-color:var(--clear)}
+.band .cell.good .v{color:var(--clear)}
+
+/* ── tabs ─────────────────────────────────── */
+.tabs{margin-top:26px;display:flex;gap:4px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.tabs button{background:none;border:0;padding:9px 14px;cursor:pointer;font-family:var(--sans);font-size:11px;
+  font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3);
+  border-bottom:2px solid transparent;margin-bottom:-1px;border-radius:var(--r) var(--r) 0 0}
+.tabs button:hover{color:var(--ink);background:var(--surface-2)}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent);background:var(--surface)}
+.tabs .count{font-family:var(--mono);font-size:10px;margin-left:5px;color:var(--alert)}
+section[role=tabpanel]{padding-top:20px}
+
+/* ── tables ───────────────────────────────── */
+.tablewrap{border:1px solid var(--line);background:var(--surface);border-radius:var(--r);overflow-x:auto;box-shadow:var(--shadow)}
+table{border-collapse:collapse;width:100%;font-size:12.5px}
+th{background:var(--surface-3);color:var(--ink-2);text-align:left;padding:10px 12px;font-size:9.5px;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;border-bottom:1px solid var(--line)}
+td{padding:11px 12px;border-bottom:1px solid var(--line-soft);white-space:nowrap;vertical-align:middle}
+tbody tr:last-child td{border-bottom:0}
+tbody tr.clickable{cursor:pointer}
+tbody tr.clickable:hover td{background:var(--surface-2)}
+td.n{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+td.m{font-family:var(--mono)}
+td.neg{color:var(--alert)}
+td.mute{color:var(--ink-3)}
+.pill{display:inline-block;font-size:9.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+  padding:3px 8px;border-radius:99px;border:1px solid}
+.pill.ok{color:var(--clear);border-color:var(--clear);background:var(--clear-soft)}
+.pill.bad{color:var(--alert);border-color:var(--alert);background:var(--alert-soft)}
+.pill.warn{color:var(--pending);border-color:var(--pending);background:var(--pending-soft)}
+.pill.neutral{color:var(--ink-3);border-color:var(--line);background:var(--surface-2)}
+.iconbtn{border:1px solid var(--line);background:var(--surface);cursor:pointer;padding:5px 11px;font-family:var(--sans);
+  font-size:10px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-2);border-radius:var(--r)}
+.iconbtn:hover{border-color:var(--accent);color:var(--accent-ink)}
+tr.detail td{background:var(--surface-2);padding:0;border-bottom:1px solid var(--line)}
+.detailgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(152px,1fr));gap:1px;background:var(--line-soft);white-space:normal}
+.detailgrid div{background:var(--surface-2);padding:11px 14px}
+.detailgrid .dk{font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+.detailgrid .dv{font-family:var(--mono);font-size:13px;font-variant-numeric:tabular-nums;margin-top:3px}
+.detailnote{background:var(--surface-2);padding:0 14px 12px;font-size:12px;color:var(--alert)}
+.detailnote.calm{color:var(--ink-2)}
+tr.subnote td{background:var(--surface-2);border-bottom:1px solid var(--line);padding:0 12px 11px;
+  white-space:normal;font-size:12px;line-height:1.45;color:var(--ink-2)}
+tr.subnote.warn td{color:var(--alert)}
+
+/* ── settings ─────────────────────────────── */
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(212px,1fr));gap:16px 20px;
+  border:1px solid var(--line);background:var(--surface);padding:22px;border-radius:var(--r);box-shadow:var(--shadow)}
+.field label{display:block;font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px}
+.field input,.field select,.field textarea{width:100%;padding:8px 10px;border:1px solid var(--line);background:var(--surface-2);
+  font-family:var(--mono);font-size:12.5px;color:var(--ink);border-radius:var(--r)}
+.field input:focus,.field select:focus,.field textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;background:var(--surface)}
+.field .note{font-size:11px;color:var(--ink-3);margin-top:5px;line-height:1.4}
+
+/* ── notices & actions ────────────────────── */
+.notice{margin-top:16px;border:1px solid var(--line);border-left:3px solid var(--alert);background:var(--surface);
+  padding:12px 16px;font-size:13px;border-radius:var(--r)}
+.notice.ok{border-left-color:var(--clear)}
+.notice h3{margin:0 0 5px;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+.notice ul{margin:0;padding-left:17px} .notice li{margin:3px 0;color:var(--ink-2)}
+.actions{margin-top:20px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+button.primary{background:var(--accent);color:#fff;border:0;padding:12px 22px;font-family:var(--sans);font-size:11px;
+  font-weight:700;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;border-radius:var(--r)}
+[data-theme="dark"] button.primary{color:var(--bg)}
+button.primary:hover:not(:disabled){filter:brightness(1.1)}
+button.primary:disabled{background:var(--line);color:var(--ink-3);cursor:not-allowed}
+button.ghost{background:var(--surface);border:1px solid var(--line);padding:11px 18px;font-family:var(--sans);font-size:11px;
+  font-weight:600;letter-spacing:.11em;text-transform:uppercase;cursor:pointer;color:var(--ink-2);border-radius:var(--r)}
+button.ghost:hover:not(:disabled){border-color:var(--accent);color:var(--accent-ink)}
+button.ghost:disabled{color:var(--ink-3);opacity:.55;cursor:not-allowed}
+.status{margin-top:13px;font-family:var(--mono);font-size:12px;color:var(--ink-2);min-height:17px}
+.status.err{color:var(--alert)}
+.bar-progress{height:2px;background:var(--line);margin-top:8px;overflow:hidden;display:none;border-radius:2px}
+.bar-progress.on{display:block}
+.bar-progress i{display:block;height:100%;width:32%;background:var(--accent);animation:scan 1.05s linear infinite}
+@keyframes scan{0%{transform:translateX(-100%)}100%{transform:translateX(320%)}}
+.empty{padding:38px 20px;text-align:center;color:var(--ink-3);font-size:13px;white-space:normal}
+footer{margin-top:40px;padding-top:14px;border-top:1px solid var(--line);font-size:11.5px;color:var(--ink-3);
+  display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
+footer code{font-family:var(--mono)}
+
+/* ── case log ─────────────────────────────── */
+.logbar{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px}
+.logbar .f{display:flex;flex-direction:column;gap:5px}
+.logbar label{font-size:9.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+.logbar select,.logbar input{padding:7px 9px;border:1px solid var(--line);background:var(--surface);color:var(--ink);
+  font-family:var(--mono);font-size:12px;border-radius:var(--r)}
+.logbar .grow{flex:1;min-width:150px}
+.logbar .grow input{width:100%}
+
+.strip{border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:16px 18px;
+  margin-bottom:16px;box-shadow:var(--shadow)}
+.strip .head{display:flex;justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.strip .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--ink-3);align-items:center}
+.strip .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.month{display:flex;align-items:center;gap:12px;margin-bottom:7px}
+.month .mlab{font-family:var(--mono);font-size:11px;color:var(--ink-3);width:64px;flex:none;text-align:right}
+.days{display:flex;gap:3px;flex-wrap:wrap}
+.day{width:22px;height:22px;border-radius:2px;background:var(--surface-3);border:1px solid transparent;
+  font-family:var(--mono);font-size:9.5px;color:var(--ink-3);display:flex;align-items:center;justify-content:center;
+  cursor:default;padding:0;line-height:1}
+.day.has{cursor:pointer;color:#fff;font-weight:700;border-color:rgba(0,0,0,.12)}
+[data-theme="dark"] .day.has{color:var(--bg)}
+.day.open{background:var(--alert)}
+.day.reported{background:var(--pending)}
+.day.resolved{background:var(--clear)}
+.day.has:hover{outline:2px solid var(--ink);outline-offset:1px}
+.day.sel{outline:2px solid var(--accent);outline-offset:1px}
+
+.logrow td{border-left:3px solid transparent}
+.logrow.open td:first-child{border-left-color:var(--alert)}
+.logrow.reported td:first-child{border-left-color:var(--pending)}
+.logrow.resolved td:first-child{border-left-color:var(--clear)}
+.editor{background:var(--surface-2);padding:14px;white-space:normal;display:grid;gap:12px}
+.editor .refs{border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--surface)}
+.editor .refs table{font-size:11.5px}
+.editor .refs th{background:var(--surface-3);font-size:9px}
+.editor textarea{min-height:62px;resize:vertical;font-family:var(--sans);font-size:12.5px;width:100%;
+  padding:8px 10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:var(--r)}
+.editor .row{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.editor .spacer{flex:1}
+.warnbox{margin-bottom:16px;border:1px solid var(--pending);background:var(--pending-soft);color:var(--pending);
+  padding:10px 14px;font-size:12.5px;border-radius:var(--r)}
+
+@media (max-width:820px){
+  .band{grid-template-columns:1fr 1fr}
+  .bar .tag{display:none}
+  .switch button{padding:6px 11px}
+  .month .mlab{width:auto}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="bar"><div class="inner">
+  <svg class="mark" width="26" height="26" viewBox="0 0 24 24" role="img" aria-label="Wallet Reconciliation">
+    <rect width="24" height="24" rx="5.5" class="mark-tile"/>
+    <path d="M12 3.6v16.8" class="mark-seam" stroke-width="1.2" stroke-linecap="round"/>
+    <rect x="4.6" y="8.1" width="5.6" height="2.8" rx="1.4" class="mark-bar"/>
+    <rect x="13.8" y="8.1" width="5.6" height="2.8" rx="1.4" class="mark-bar"/>
+    <rect x="4.6" y="13.1" width="5.6" height="2.8" rx="1.4" class="mark-bar"/>
+    <rect x="13.8" y="13.1" width="5.6" height="2.8" rx="1.4" class="mark-bar"/>
+  </svg>
+  <h1>Wallet Reconciliation</h1>
+  <div class="switch" id="switch" role="group" aria-label="Choose the provider">
+    <button type="button" data-prov="orange" aria-pressed="true">Orange</button>
+    <button type="button" data-prov="etisalat" aria-pressed="false">Etisalat</button>
+  </div>
+  <span class="tag" id="tagline">Build 2026-08-31 · runs offline, nothing is uploaded</span>
+  <button class="themebtn" id="theme" title="Switch between light and dark" aria-label="Switch between light and dark">
+    <svg width="15" height="15" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <circle cx="10" cy="10" r="4.2" stroke="currentColor" stroke-width="1.5"/>
+      <path d="M10 1.6v2.2M10 16.2v2.2M18.4 10h-2.2M3.8 10H1.6M15.9 4.1l-1.6 1.6M5.7 14.3l-1.6 1.6M15.9 15.9l-1.6-1.6M5.7 5.7L4.1 4.1"
+            stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+  </button>
+</div></div>
+
+<div class="wrap">
+
+  <div class="intake">
+    <div class="drop" id="drop">
+      <svg width="76" height="42" viewBox="0 0 76 42" fill="none" aria-hidden="true">
+        <rect x="1" y="4" width="24" height="34" rx="2" stroke="currentColor" stroke-width="1.2" opacity=".38"/>
+        <rect x="51" y="4" width="24" height="34" rx="2" stroke="currentColor" stroke-width="1.2" opacity=".38"/>
+        <path d="M6 12h14M6 18h14M6 24h10M56 12h14M56 18h14M56 24h10" stroke="currentColor" stroke-width="1.2" opacity=".2"/>
+        <path d="M27 21h22" stroke="currentColor" stroke-width="1.2" stroke-dasharray="3 3" opacity=".5"/>
+        <circle cx="38" cy="21" r="4" stroke="currentColor" stroke-width="1.2" opacity=".7"/>
+      </svg>
+      <h2>Drop the AMS and Transaction reports here</h2>
+      <p>Any number of days at once, plus the bank statement and reconciliation sheet.</p>
+      <span class="cta">or click to browse</span>
+    </div>
+    <div class="rail" id="rail" style="display:none"></div>
+  </div>
+
+  <div class="band" id="band" style="display:none">
+    <div class="cell"><div class="v" id="s-days">—</div><div class="k">Days reconciled</div></div>
+    <div class="cell"><div class="v" id="s-matched">—</div><div class="k">Transactions matched</div></div>
+    <div class="cell" id="c-exc"><div class="v" id="s-exc">—</div><div class="k">Exceptions</div></div>
+    <div class="cell" id="c-uns"><div class="v" id="s-uns">—</div><div class="k">Unsettled value (EGP)</div></div>
+  </div>
+
+  <div class="status" id="status">Load one or more pairs of reports to begin.</div>
+  <div class="bar-progress" id="prog"><i></i></div>
+  <div id="notices"></div>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="days">Days</button>
+    <button role="tab" aria-selected="false" data-tab="exceptions">Exceptions<span class="count" id="tab-exc"></span></button>
+    <button role="tab" aria-selected="false" data-tab="bank">Bank<span class="count" id="bank-count"></span></button>
+    <button role="tab" aria-selected="false" data-tab="log">Case log<span class="count" id="log-count"></span></button>
+    <button role="tab" aria-selected="false" data-tab="settings">Settings</button>
+  </div>
+
+  <section role="tabpanel" id="tab-days">
+    <div class="tablewrap"><table id="days-table"><tbody><tr><td class="empty">No days loaded yet.</td></tr></tbody></table></div>
+    <div class="actions">
+      <button class="primary" id="dl-all" disabled>Download all Tool files</button>
+      <button class="ghost" id="log-days" disabled>Save flagged days to the log</button>
+      <span class="status" id="dl-note" style="margin:0"></span>
+    </div>
+  </section>
+
+  <section role="tabpanel" id="tab-exceptions" hidden>
+    <div id="exc-note"></div>
+    <div class="tablewrap"><table id="exc-table"><tbody><tr><td class="empty">No exceptions found.</td></tr></tbody></table></div>
+    <div class="actions">
+      <button class="primary" id="dl-var" disabled>Export variance sheet</button>
+      <button class="ghost" id="copy-refs" disabled>Copy references</button>
+    </div>
+  </section>
+
+  <section role="tabpanel" id="tab-bank" hidden>
+    <div class="tablewrap"><table id="bank-table"><tbody><tr><td class="empty">Drop the bank statement and the reconciliation sheet to compare them.</td></tr></tbody></table></div>
+    <div class="actions">
+      <button class="primary" id="dl-bank" disabled>Export comparison</button>
+      <button class="ghost" id="copy-bank" disabled>Copy as table</button>
+      <button class="ghost" id="log-bank" disabled>Save flagged days to the log</button>
+    </div>
+  </section>
+
+  <section role="tabpanel" id="tab-log" hidden>
+    <div id="log-warn"></div>
+
+    <div class="strip" id="strip">
+      <div class="head">
+        <span class="eyebrow">Days on record</span>
+        <span class="legend">
+          <span><i style="background:var(--alert)"></i>Open</span>
+          <span><i style="background:var(--pending)"></i>Reported</span>
+          <span><i style="background:var(--clear)"></i>Resolved</span>
+          <span><i style="background:var(--surface-3)"></i>Clean or not reconciled</span>
+        </span>
+      </div>
+      <div id="strip-body"></div>
+    </div>
+
+    <div class="logbar">
+      <div class="f"><label for="lf-status">Status</label>
+        <select id="lf-status">
+          <option value="all">All</option>
+          <option value="open">Open</option>
+          <option value="reported">Reported</option>
+          <option value="resolved">Resolved</option>
+          <option value="unresolved">Open and reported</option>
+        </select></div>
+      <div class="f"><label for="lf-prov">Provider</label>
+        <select id="lf-prov">
+          <option value="current">Current provider</option>
+          <option value="all">All providers</option>
+        </select></div>
+      <div class="f"><label for="lf-kind">Issue</label>
+        <select id="lf-kind">
+          <option value="all">All</option>
+          <option value="missing">Missing records</option>
+          <option value="variance">Bank variance</option>
+          <option value="both">Both</option>
+        </select></div>
+      <div class="f"><label for="lf-from">From</label><input type="date" id="lf-from"></div>
+      <div class="f"><label for="lf-to">To</label><input type="date" id="lf-to"></div>
+      <div class="f grow"><label for="lf-q">Search date, reference or note</label><input type="text" id="lf-q" placeholder="116391020"></div>
+      <button class="ghost" id="lf-clear">Clear filters</button>
+    </div>
+
+    <div class="tablewrap"><table id="log-table"><tbody><tr><td class="empty">Nothing recorded yet. Reconcile a day, then use “Save flagged days to the log”.</td></tr></tbody></table></div>
+
+    <div class="actions">
+      <button class="primary" id="log-xlsx" disabled>Export the log</button>
+      <button class="ghost" id="log-refs" disabled>Export open references</button>
+      <button class="ghost" id="log-backup" disabled>Back up to a file</button>
+      <button class="ghost" id="log-restore">Restore from a file</button>
+      <div class="spacer" style="flex:1"></div>
+      <button class="ghost" id="log-wipe" disabled>Erase the log</button>
+    </div>
+    <div class="status" id="log-status"></div>
+  </section>
+
+  <section role="tabpanel" id="tab-settings" hidden>
+    <div class="fields">
+      <div class="field"><label for="f-stmt">Statement date override</label>
+        <input type="date" id="f-stmt">
+        <div class="note">Leave empty to use the next working day after each transaction date.</div></div>
+      <div class="field"><label for="f-hol">Bank holidays</label>
+        <input type="text" id="f-hol" placeholder="2026-07-23, 2026-09-05">
+        <div class="note">Skipped along with Friday and Saturday.</div></div>
+      <div class="field"><label for="f-refund">Card holder on refunds</label>
+        <select id="f-refund"><option value="wallet">Wallet number from the report</option><option value="blank">Leave blank</option></select></div>
+      <div class="field"><label for="f-sort">Row order in the Tool file</label>
+        <select id="f-sort"><option value="commission">Commission, ascending</option><option value="time">Transaction time</option><option value="none">As issued by AMS</option></select></div>
+      <div class="field"><label for="f-mdr">Commission (MDR) sign</label>
+        <select id="f-mdr"><option value="abs">Remove the minus — always positive</option><option value="raw">Keep as issued in the report</option></select>
+        <div class="note">Negative MDR values are written without the minus sign in the Tool file.</div></div>
+      <div class="field"><label for="f-key">Bank description keyword</label>
+        <input type="text" id="f-key" value="ORANGE">
+        <div class="note">Only bank lines containing this text are counted. Check it against a real statement for each provider.</div></div>
+      <div class="field"><label for="f-tol">Accepted difference (EGP)</label>
+        <input type="text" id="f-tol" value="20">
+        <div class="note">Anything larger is flagged as bank higher or sheet higher.</div></div>
+      <div class="field"><label for="f-basis">Bank date basis</label>
+        <select id="f-basis"><option value="value-1">Value date minus one day</option><option value="value">Value date</option><option value="posting">Posting date</option><option value="description">Date written in the description</option></select>
+        <div class="note">Maps a bank line back to the day the transactions happened. Use the description option when the bank batches several days into one credit.</div></div>
+      <div class="field"><label for="f-cur">Currency</label><input type="text" id="f-cur" value="EGP"></div>
+      <div class="field"><label for="f-mname">Merchant name</label><input type="text" id="f-mname" placeholder="leave empty"></div>
+      <div class="field"><label for="f-mnum">Merchant number</label><input type="text" id="f-mnum" placeholder="leave empty">
+        <div class="note">Used on the exported sheets, and to warn you when a report belongs to the other provider.</div></div>
+      <div class="field"><label for="f-a1">Merchant address 1</label><input type="text" id="f-a1" placeholder="leave empty"></div>
+      <div class="field"><label for="f-a2">Merchant address 2</label><input type="text" id="f-a2" placeholder="leave empty"></div>
+    </div>
+  </section>
+
+  <footer>
+    <span id="foot-prov">Join key <code>AMS.Original_Trancation = Report.System Reference</code></span>
+    <span>The log is stored in this browser only — back it up to a file</span>
+  </footer>
+</div>
+
+<input type="file" id="picker" accept=".csv,.xlsx" multiple style="display:none">
+<input type="file" id="restore-picker" accept=".json" style="display:none">
+
+<script>
+/* ============================================================
+   Minimal XLSX reader — unzips and scans sheet XML without a
+   DOM parser, so it stays fast on very large sheets.
+   ============================================================ */
+
+const dec = typeof TextDecoder !== 'undefined' ? new TextDecoder('utf-8') : null;
+
+function dv(buf) { return new DataView(buf.buffer, buf.byteOffset, buf.byteLength); }
+
+async function inflateRaw(bytes) {
+  if (typeof DecompressionStream === 'undefined') throw new Error('this browser cannot unzip .xlsx files');
+  const ds = new DecompressionStream('deflate-raw');
+  const w = ds.writable.getWriter();
+  w.write(bytes); w.close();
+  const rd = ds.readable.getReader(), parts = [];
+  let size = 0;
+  for (;;) { const r = await rd.read(); if (r.done) break; parts.push(r.value); size += r.value.length; }
+  const out = new Uint8Array(size);
+  let off = 0;
+  for (const p of parts) { out.set(p, off); off += p.length; }
+  return out;
+}
+
+/** Read the ZIP central directory and return { name -> async () => Uint8Array }. */
+function openZip(bytes) {
+  const d = dv(bytes);
+  let eocd = -1;
+  for (let i = bytes.length - 22; i >= 0 && i > bytes.length - 66000; i--) {
+    if (d.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+  }
+  if (eocd < 0) throw new Error('this file is not a valid .xlsx workbook');
+  const count = d.getUint16(eocd + 10, true);
+  let p = d.getUint32(eocd + 16, true);
+  const entries = {};
+  for (let i = 0; i < count; i++) {
+    if (d.getUint32(p, true) !== 0x02014b50) break;
+    const method = d.getUint16(p + 10, true);
+    const compSize = d.getUint32(p + 20, true);
+    const nameLen = d.getUint16(p + 28, true);
+    const extraLen = d.getUint16(p + 30, true);
+    const commentLen = d.getUint16(p + 32, true);
+    const local = d.getUint32(p + 42, true);
+    const name = dec.decode(bytes.subarray(p + 46, p + 46 + nameLen));
+    entries[name] = { method, compSize, local };
+    p += 46 + nameLen + extraLen + commentLen;
+  }
+  return {
+    has: n => !!entries[n],
+    names: () => Object.keys(entries),
+    read: async function (n) {
+      const e = entries[n];
+      if (!e) return null;
+      const nameLen = d.getUint16(e.local + 26, true);
+      const extraLen = d.getUint16(e.local + 28, true);
+      const start = e.local + 30 + nameLen + extraLen;
+      const raw = bytes.subarray(start, start + e.compSize);
+      return e.method === 0 ? raw : inflateRaw(raw);
+    },
+    text: async function (n) { const b = await this.read(n); return b ? dec.decode(b) : null; }
+  };
+}
+
+/* ---------------- XML helpers ---------------- */
+const ENT = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'" };
+function unesc(s) {
+  if (s.indexOf('&') < 0 && s.indexOf('_x') < 0) return s;
+  return s.replace(/&(#x?[0-9a-fA-F]+|amp|lt|gt|quot|apos);/g, function (_, e) {
+    if (e.charAt(0) === '#') {
+      const code = e.charAt(1) === 'x' ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10);
+      return String.fromCodePoint(code);
+    }
+    return ENT[e] || _;
+  }).replace(/_x([0-9A-Fa-f]{4})_/g, function (_, h) { return String.fromCharCode(parseInt(h, 16)); });
+}
+function attr(tag, name) {
+  const m = new RegExp(name + '="([^"]*)"').exec(tag);
+  return m ? m[1] : null;
+}
+
+/* ---------------- shared strings ---------------- */
+function parseSharedStrings(xml) {
+  const out = [];
+  if (!xml) return out;
+  const re = /<si>([\s\S]*?)<\/si>/g;
+  let m;
+  while ((m = re.exec(xml))) {
+    const inner = m[1];
+    let text = '', t;
+    const tre = /<t[^>]*>([\s\S]*?)<\/t>/g;
+    while ((t = tre.exec(inner))) text += t[1];
+    out.push(unesc(text));
+  }
+  return out;
+}
+
+/* ---------------- date styles ---------------- */
+const BUILTIN_DATE = { 14:1, 15:1, 16:1, 17:1, 18:1, 19:1, 20:1, 21:1, 22:1, 45:1, 46:1, 47:1 };
+function parseDateStyles(xml) {
+  const isDate = [];
+  if (!xml) return isDate;
+  const custom = {};
+  let m;
+  const nre = /<numFmt[^>]*\/>/g;
+  while ((m = nre.exec(xml))) {
+    const tag = m[0], id = +attr(tag, 'numFmtId'), code = attr(tag, 'formatCode') || '';
+    const bare = code.replace(/\[[^\]]*\]/g, '').replace(/"[^"]*"/g, '');
+    custom[id] = /[dmyh]/i.test(bare) && /(d|y|m{3,}|h)/i.test(bare);
+  }
+  const block = /<cellXfs[^>]*>([\s\S]*?)<\/cellXfs>/.exec(xml);
+  if (!block) return isDate;
+  const xre = /<xf[\s\S]*?(?:\/>|<\/xf>)/g;
+  let x;
+  while ((x = xre.exec(block[1]))) {
+    const id = +(attr(x[0], 'numFmtId') || 0);
+    isDate.push(!!BUILTIN_DATE[id] || custom[id] === true);
+  }
+  return isDate;
+}
+
+const EPOCH = Date.UTC(1899, 11, 30);
+function serialToDate(n) {
+  const d = new Date(EPOCH + Math.round(n * 86400000));
+  return { y: d.getUTCFullYear(), m: d.getUTCMonth(), d: d.getUTCDate() };
+}
+
+/* ---------------- column letters ---------------- */
+function colIndex(ref) {
+  let n = 0;
+  for (let i = 0; i < ref.length; i++) {
+    const c = ref.charCodeAt(i);
+    if (c < 65 || c > 90) break;
+    n = n * 26 + (c - 64);
+  }
+  return n - 1;
+}
+
+/* ---------------- sheet scan ---------------- */
+/** Walk the rows of a worksheet, calling back with an array of typed values. */
+function scanSheet(xml, shared, dateStyles, onRow) {
+  const rowRe = /<row[^>]*?(\/>|>([\s\S]*?)<\/row>)/g;
+  let rm;
+  while ((rm = rowRe.exec(xml))) {
+    if (rm[1] === '/>') { if (onRow([]) === false) return; continue; }
+    const body = rm[2];
+    const cells = [];
+    let i = 0;
+    for (;;) {
+      const start = body.indexOf('<c', i);
+      if (start < 0) break;
+      const gt = body.indexOf('>', start);
+      if (gt < 0) break;
+      const head = body.slice(start, gt);
+      const selfClosed = body.charAt(gt - 1) === '/';
+      const ref = attr(head, 'r'), type = attr(head, 't'), style = attr(head, 's');
+      const ci = ref ? colIndex(ref) : cells.length;
+      let value = null;
+      if (!selfClosed) {
+        const end = body.indexOf('</c>', gt);
+        const inner = body.slice(gt + 1, end < 0 ? undefined : end);
+        i = end < 0 ? body.length : end + 4;
+        if (type === 'inlineStr') {
+          let text = '', t;
+          const tre = /<t[^>]*>([\s\S]*?)<\/t>/g;
+          while ((t = tre.exec(inner))) text += t[1];
+          value = unesc(text);
+        } else {
+          const v = /<v>([\s\S]*?)<\/v>/.exec(inner);
+          if (v) {
+            const raw = v[1];
+            if (type === 's') value = shared[+raw];
+            else if (type === 'str' || type === 'e') value = unesc(raw);
+            else if (type === 'b') value = raw === '1';
+            else {
+              const num = Number(raw);
+              value = (style != null && dateStyles[+style] && isFinite(num) && num > 0)
+                ? serialToDate(num) : num;
+            }
+          }
+        }
+      } else {
+        i = gt + 1;
+      }
+      while (cells.length < ci) cells.push(null);
+      cells[ci] = value;
+    }
+    if (onRow(cells) === false) return;
+  }
+}
+
+/** Read one worksheet into rows of typed values. `pick` may limit rows kept. */
+async function readSheet(bytes, opts) {
+  opts = opts || {};
+  const zip = openZip(bytes);
+  const wbXml = await zip.text('xl/workbook.xml');
+  if (!wbXml) throw new Error('this file is not a valid .xlsx workbook');
+  const relsXml = await zip.text('xl/_rels/workbook.xml.rels') || '';
+  const rels = {};
+  let m;
+  const rre = /<Relationship[^>]*\/>/g;
+  while ((m = rre.exec(relsXml))) rels[attr(m[0], 'Id')] = attr(m[0], 'Target');
+
+  const sheets = [];
+  const sre = /<sheet[^>]*\/>/g;
+  while ((m = sre.exec(wbXml))) {
+    const tag = m[0];
+    const rid = attr(tag, 'r:id') || attr(tag, 'id');
+    let target = rels[rid] || ('worksheets/sheet' + (sheets.length + 1) + '.xml');
+    if (target.charAt(0) === '/') target = target.slice(1);
+    else if (target.indexOf('xl/') !== 0) target = 'xl/' + target;
+    sheets.push({ name: unesc(attr(tag, 'name') || ('Sheet' + (sheets.length + 1))), path: target });
+  }
+  if (!sheets.length) throw new Error('the workbook has no sheets');
+
+  let target = sheets[0];
+  if (opts.sheet) {
+    const found = sheets.filter(s => s.name === opts.sheet)[0];
+    if (found) target = found;
+  }
+  const shared = parseSharedStrings(await zip.text('xl/sharedStrings.xml'));
+  const dateStyles = parseDateStyles(await zip.text('xl/styles.xml'));
+  const xml = await zip.text(target.path);
+  if (!xml) throw new Error('the sheet could not be read');
+
+  const rows = [];
+  const limit = opts.maxRows || Infinity;
+  let n = 0;
+  scanSheet(xml, shared, dateStyles, function (cells) {
+    n++;
+    if (opts.onRow) return opts.onRow(cells, n);
+    rows.push(cells);
+    return n < limit;
+  });
+  return { sheetNames: sheets.map(s => s.name), name: target.name, rows: rows, count: n };
+}
+
+
+/* ============================================================
+   Wallet Reconciliation Engine v2
+   Multi-day batch matching, exception capture, XLSX output.
+   No dependencies. Runs in the browser and in Node.
+   ============================================================ */
+
+/* ---------------- CSV ---------------- */
+function parseCSV(text) {
+  if (text.charCodeAt(0) === 0xfeff) text = text.slice(1);
+  const n = text.length, rows = [];
+  let i = 0, row = [];
+  while (i < n) {
+    let value;
+    if (text.charCodeAt(i) === 34) {
+      i++;
+      let start = i, buf = null;
+      for (;;) {
+        const q = text.indexOf('"', i);
+        if (q < 0) { const s = text.slice(start); value = buf ? buf + s : s; i = n; break; }
+        if (text.charCodeAt(q + 1) === 34) { buf = (buf || '') + text.slice(start, q + 1); i = q + 2; start = i; continue; }
+        const s = text.slice(start, q); value = buf ? buf + s : s; i = q + 1; break;
+      }
+    } else {
+      let j = i;
+      while (j < n) { const c = text.charCodeAt(j); if (c === 44 || c === 10 || c === 13) break; j++; }
+      value = text.slice(i, j); i = j;
+    }
+    row.push(value);
+    const c = text.charCodeAt(i);
+    if (c === 44) { i++; continue; }
+    if (c === 13) { i++; if (text.charCodeAt(i) === 10) i++; rows.push(row); row = []; continue; }
+    if (c === 10) { i++; rows.push(row); row = []; continue; }
+    if (i >= n) break;
+    let j = i;
+    while (j < n) { const d = text.charCodeAt(j); if (d === 44 || d === 10 || d === 13) break; j++; }
+    i = j;
+  }
+  if (row.length) rows.push(row);
+  return rows.filter(r => r.length > 1 || (r.length === 1 && r[0] !== ''));
+}
+
+/* ---------------- values ---------------- */
+const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const MONTHS = {}; MONTH_NAMES.forEach((m, i) => { MONTHS[m.toLowerCase()] = i; });
+const DT_RE = /^\s*(?:[A-Za-z]+,\s*)?([A-Za-z]+)\s+(\d{1,2})\s*,\s*(\d{4})(?:\s+(\d{1,2}):(\d{2}):(\d{2})\s*([AaPp][Mm])?)?\s*$/;
+
+function parseTimestamp(s) {
+  const m = DT_RE.exec(s || '');
+  if (!m) return null;
+  const mo = MONTHS[m[1].toLowerCase()];
+  if (mo === undefined) return null;
+  let h = m[4] ? +m[4] : 0;
+  const ap = m[7] ? m[7].toUpperCase() : null;
+  if (ap === 'PM' && h < 12) h += 12;
+  if (ap === 'AM' && h === 12) h = 0;
+  return { y: +m[3], m: mo, d: +m[2], t: h * 3600 + (m[5] ? +m[5] : 0) * 60 + (m[6] ? +m[6] : 0) };
+}
+function toNumber(s) {
+  if (s === null || s === undefined) return NaN;
+  const v = String(s).replace(/,/g, '').trim();
+  return v === '' ? NaN : Number(v);
+}
+const DAY_MS = 86400000;
+const pad = n => String(n).padStart(2, '0');
+const dateKey = d => d.y + '-' + pad(d.m + 1) + '-' + pad(d.d);
+const dateDisp = d => pad(d.d) + '-' + MONTH_NAMES[d.m].slice(0, 3) + '-' + d.y;
+const timeDisp = t => pad(Math.floor(t / 3600)) + ':' + pad(Math.floor(t / 60) % 60) + ':' + pad(t % 60);
+const excelSerial = d => Math.round((Date.UTC(d.y, d.m, d.d) - Date.UTC(1899, 11, 30)) / DAY_MS);
+
+function nextWorkingDay(d, holidays, weekend) {
+  let t = Date.UTC(d.y, d.m, d.d) + DAY_MS;
+  for (let g = 0; g < 400; g++) {
+    const dt = new Date(t), key = dt.toISOString().slice(0, 10);
+    if (!weekend.has(dt.getUTCDay()) && !holidays.has(key))
+      return { y: dt.getUTCFullYear(), m: dt.getUTCMonth(), d: dt.getUTCDate() };
+    t += DAY_MS;
+  }
+  return d;
+}
+
+/* ---------------- report handling ---------------- */
+const AMS_KEY = 'Original_Trancation';
+const TR_KEY = 'System Reference';
+const REFUND = 'Meeza Digital Refund';
+
+function classify(rows) {
+  const head = rows[0].map(h => h.trim());
+  if (head.indexOf(AMS_KEY) >= 0) return 'ams';
+  if (head.indexOf(TR_KEY) >= 0 && head.indexOf('Mobile') >= 0) return 'tr';
+  return 'unknown';
+}
+
+function indexOf(rows) {
+  const head = rows[0].map(h => h.trim()), idx = {};
+  head.forEach((h, i) => { if (!(h in idx)) idx[h] = i; });
+  return idx;
+}
+
+/** Split a report into data rows and work out which day it covers. */
+function readReport(rows) {
+  const idx = indexOf(rows);
+  if (idx['Type'] === undefined || idx['Date'] === undefined)
+    throw new Error('the file has no Type/Date columns');
+  const data = [], tally = {};
+  for (let i = 1; i < rows.length; i++) {
+    const r = rows[i];
+    if (!(r[idx['Type']] || '').trim()) continue;      // footer / summary lines
+    const ts = parseTimestamp(r[idx['Date']]);
+    if (!ts) continue;
+    r._ts = ts;
+    data.push(r);
+    const k = dateKey(ts);
+    tally[k] = (tally[k] || 0) + 1;
+  }
+  const byDay = {};
+  for (const r of data) { const k = dateKey(r._ts); (byDay[k] = byDay[k] || []).push(r); }
+  const days = Object.keys(byDay).sort();
+  let day = '', best = -1;
+  for (const k in tally) if (tally[k] > best) { best = tally[k]; day = k; }
+  return { idx, data, day, days, byDay, count: data.length };
+}
+
+/** The merchant ID carried by a report, if it has one. */
+function reportMid(rep) {
+  const i = rep.idx['MerchantId'] !== undefined ? rep.idx['MerchantId'] : rep.idx['Merchant'];
+  if (i === undefined) return '';
+  for (const r of rep.data) {
+    const v = String(r[i] || '').split('-')[0].trim();
+    if (v) return v;
+  }
+  return '';
+}
+
+/** One calendar day out of a report that may span several. */
+function sliceDay(rep, day) {
+  return { idx: rep.idx, data: rep.byDay[day] || [], day: day, days: [day],
+           sources: [{ fileDay: rep.day, rows: (rep.byDay[day] || []).length }] };
+}
+
+/**
+ * Join slices of the same day taken from different exported files.
+ * A transaction processed late is written into the next day's file while
+ * keeping its own date, so the day is only complete once both are in hand.
+ */
+function mergeSlices(slices, keyCol) {
+  if (slices.length === 1) return slices[0];
+  const idx = slices[0].idx, data = [], seen = new Set(), sources = [];
+  const key = idx[keyCol];
+  for (const s of slices) {
+    let added = 0;
+    for (const r of s.data) {
+      const k = key === undefined ? null : String(r[key] || '').trim();
+      if (k && seen.has(k)) continue;
+      if (k) seen.add(k);
+      data.push(r); added++;
+    }
+    sources.push({ fileDay: s.sources ? s.sources[0].fileDay : s.day, rows: added });
+  }
+  return { idx: idx, data: data, day: slices[0].day, days: [slices[0].day], sources: sources };
+}
+
+/* signed amount: the Transaction Report prints refunds positive, AMS prints them negative */
+function signedAmount(row, idx, isTR) {
+  const v = toNumber(row[idx['Amount']]);
+  if (!isTR) return v;
+  return (row[idx['Type']] || '').trim() === REFUND ? -Math.abs(v) : v;
+}
+
+/* ---------------- reconcile one day ---------------- */
+function reconcileDay(ams, tr, opts) {
+  const o = Object.assign({
+    merchantName: '', merchantAddress1: '', merchantAddress2: '', merchantNumber: '',
+    currency: 'EGP', holidays: [], sort: 'commission', refundCardHolder: 'wallet', statementDate: '',
+    absCommission: true, expectMid: ''
+  }, opts || {});
+  const holidays = new Set(o.holidays), weekend = new Set([5, 6]);
+  let forced = null;
+  const fm = /^(\d{4})-(\d{2})-(\d{2})$/.exec(o.statementDate || '');
+  if (fm) forced = { y: +fm[1], m: +fm[2] - 1, d: +fm[3] };
+
+  const A = ams.idx, T = tr.idx;
+  for (const c of [AMS_KEY, 'Amount', 'MDR', 'Net_Amount'])
+    if (A[c] === undefined) throw new Error('the AMS report has no "' + c + '" column');
+  for (const c of [TR_KEY, 'Mobile', 'NetworkReference'])
+    if (T[c] === undefined) throw new Error('the Transaction Report has no "' + c + '" column');
+
+  const trByRef = new Map(), dupTr = [];
+  for (const r of tr.data) {
+    const k = (r[T[TR_KEY]] || '').trim();
+    if (trByRef.has(k)) dupTr.push(k); else trByRef.set(k, r);
+  }
+
+  const out = [], exceptions = [], dupAms = [], seen = new Set(), used = new Set();
+  let badNet = 0, signsRemoved = 0;
+  let amsGross = 0, amsMdr = 0, amsNet = 0, amsRef = 0, amsRefCount = 0;
+
+  for (const r of ams.data) {
+    const ref = (r[A[AMS_KEY]] || '').trim();
+    if (seen.has(ref)) dupAms.push(ref); else seen.add(ref);
+
+    const amount = toNumber(r[A['Amount']]);
+    const rawMdr = toNumber(r[A['MDR']]);
+    const net = toNumber(r[A['Net_Amount']]);
+    let mdr = rawMdr;
+    if (o.absCommission && rawMdr < 0) { mdr = Math.abs(rawMdr); signsRemoved++; }
+    amsGross += amount; amsMdr += rawMdr; amsNet += net;
+    if (amount < 0) { amsRef += amount; amsRefCount++; }
+    if (Math.abs(Math.abs(amount) - Math.abs(rawMdr) - Math.abs(net)) > 0.005) badNet++;
+
+    const t = trByRef.get(ref);
+    if (!t) {
+      exceptions.push(exceptionRow(r, A, 'Settlement report only', ams.day, amount, o));
+      continue;
+    }
+    used.add(ref);
+
+    const ts = r._ts;
+    let mobile = (t[T['Mobile']] || '').trim();
+    if (amount < 0 && o.refundCardHolder === 'blank') mobile = '';
+
+    out.push({
+      merchantName: o.merchantName, address1: o.merchantAddress1, address2: o.merchantAddress2,
+      statementDate: forced || nextWorkingDay(ts, holidays, weekend),
+      merchantNumber: o.merchantNumber, currency: o.currency,
+      cardHolder: mobile, tranDate: { y: ts.y, m: ts.m, d: ts.d }, time: ts.t,
+      batchNo: (t[T['NetworkReference']] || '').trim(),
+      amount: amount, commission: mdr, net: net
+    });
+  }
+
+  let trGross = 0, trRefund = 0, trRefCount = 0;
+  for (const r of tr.data) {
+    const v = signedAmount(r, T, true);
+    trGross += v;
+    if (v < 0) { trRefund += v; trRefCount++; }
+    const ref = (r[T[TR_KEY]] || '').trim();
+    if (!used.has(ref) && trByRef.get(ref) === r)
+      exceptions.push(exceptionRow(r, T, 'Transaction report only', tr.day, v, o));
+  }
+
+  if (o.sort === 'commission') out.sort((a, b) => a.commission - b.commission || a.time - b.time);
+  else if (o.sort === 'time') out.sort((a, b) => a.time - b.time);
+
+  const notes = [];
+  const midA = new Set(), midT = new Set();
+  if (A['Merchant'] !== undefined)
+    for (const r of ams.data) midA.add(String(r[A['Merchant']] || '').split('-')[0].trim());
+  if (T['MerchantId'] !== undefined)
+    for (const r of tr.data) midT.add(String(r[T['MerchantId']] || '').trim());
+  if (midA.size && midT.size) {
+    let shared = false;
+    midA.forEach(m => { if (midT.has(m)) shared = true; });
+    if (!shared) notes.push('the two reports belong to different merchant IDs (' +
+      Array.from(midA).join(', ') + ' vs ' + Array.from(midT).join(', ') + ')');
+  }
+  if (o.expectMid) {
+    const all = new Set();
+    midA.forEach(m => all.add(m)); midT.forEach(m => all.add(m));
+    if (all.size && !all.has(String(o.expectMid).trim()))
+      notes.push('these reports are for merchant ID ' + Array.from(all).join(', ') +
+        ', not ' + o.expectMid + ' — check which provider is selected');
+  }
+  if (dupAms.length) notes.push(dupAms.length + ' duplicated reference(s) in the settlement report');
+  if (dupTr.length) notes.push(dupTr.length + ' duplicated System Reference(s) in the transaction report');
+  if (badNet) notes.push(badNet + ' row(s) where Amount − MDR ≠ Net Amount');
+  if (signsRemoved) notes.push(signsRemoved + ' commission value(s) had the minus sign removed');
+  const carried = (ams.sources || []).filter(x => x.fileDay && x.fileDay !== ams.day && x.rows);
+  if (carried.length) notes.push(carried.map(x =>
+    x.rows + ' settlement row(s) for this day were carried into the ' + x.fileDay + ' report').join('; '));
+
+  const missingFromSettlement = exceptions.filter(e => e.side === 'Transaction report only');
+  const extraInSettlement = exceptions.filter(e => e.side === 'Settlement report only');
+
+  return {
+    day: ams.day || tr.day,
+    rows: out, exceptions: exceptions, notes: notes,
+    stats: {
+      amsRows: ams.data.length, trRows: tr.data.length, matched: out.length,
+      exceptions: exceptions.length,
+      unsettled: missingFromSettlement.reduce((s, e) => s + e.amount, 0),
+      unsettledCount: missingFromSettlement.length,
+      extraCount: extraInSettlement.length,
+      extra: extraInSettlement.reduce((s, e) => s + e.amount, 0),
+      carried: carried.reduce((n, x) => n + x.rows, 0), carriedFrom: carried.map(x => x.fileDay),
+      signsRemoved: signsRemoved, amsGross: amsGross, amsMdr: amsMdr, amsNet: amsNet, amsRefund: amsRef, amsRefundCount: amsRefCount,
+      trGross: trGross, trRefund: trRefund, trRefundCount: trRefCount,
+      variance: trGross - amsGross,
+      statementDate: out.length ? dateKey(out[0].statementDate) : ''
+    }
+  };
+}
+
+function exceptionRow(r, idx, side, day, amount, o) {
+  const g = name => idx[name] === undefined ? '' : String(r[idx[name]] || '').trim();
+  let mob = g('Mobile');
+  if (mob) mob = '0' + mob.replace(/^0+/, '');
+  return {
+    dayKey: r._ts ? dateKey(r._ts) : day,
+    date: r._ts ? dateDisp(r._ts) : day,
+    time: r._ts ? timeDisp(r._ts.t) : '',
+    sortKey: (r._ts ? dateKey(r._ts) : day) + ' ' + (r._ts ? timeDisp(r._ts.t) : ''),
+    side: side,
+    merchantId: g('MerchantId') || o.merchantNumber,
+    merchantName: g('MerchantName') || o.merchantName,
+    terminal: g('Terminal_Id'),
+    sysRef: g(idx[TR_KEY] !== undefined ? TR_KEY : AMS_KEY),
+    networkRef: g('NetworkReference'),
+    urn: g('URN'),
+    scheme: g('Payer Scheme Name'),
+    mobile: mob,
+    amount: amount,
+    status: g('Response') ? 'Approved' : (g('Type') || ''),
+    type: g('Type')
+  };
+}
+
+/* ---------------- batch ---------------- */
+function reconcileBatch(pairs, opts) {
+  const days = [];
+  for (const p of pairs) {
+    try {
+      days.push(Object.assign({ ok: true, label: p.label }, reconcileDay(p.ams, p.tr, opts)));
+    } catch (e) {
+      days.push({ ok: false, label: p.label, day: p.label, error: e.message, exceptions: [], rows: [], notes: [] });
+    }
+  }
+  days.sort((a, b) => (a.day < b.day ? -1 : a.day > b.day ? 1 : 0));
+  const all = [];
+  days.forEach(d => { d.exceptions.forEach(e => all.push(e)); });
+  all.sort((a, b) => (a.sortKey < b.sortKey ? -1 : a.sortKey > b.sortKey ? 1 : 0));
+  return { days: days, exceptions: all };
+}
+
+/* ================= XLSX ================= */
+const enc = typeof TextEncoder !== 'undefined' ? new TextEncoder() : null;
+const xmlEsc = s => String(s).replace(/[&<>]/g, c => (c === '&' ? '&amp;' : c === '<' ? '&lt;' : '&gt;'));
+const COLS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+
+const CRC_TABLE = (() => {
+  const t = new Uint32Array(256);
+  for (let i = 0; i < 256; i++) { let c = i; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t[i] = c >>> 0; }
+  return t;
+})();
+function crc32(chunks) {
+  let c = 0xffffffff;
+  for (const b of chunks) for (let i = 0; i < b.length; i++) c = CRC_TABLE[(c ^ b[i]) & 0xff] ^ (c >>> 8);
+  return (c ^ 0xffffffff) >>> 0;
+}
+const u32 = v => new Uint8Array([v & 255, (v >>> 8) & 255, (v >>> 16) & 255, (v >>> 24) & 255]);
+const u16 = v => new Uint8Array([v & 255, (v >>> 8) & 255]);
+
+async function deflateRaw(chunks) {
+  if (typeof CompressionStream === 'undefined') return null;
+  try {
+    const cs = new CompressionStream('deflate-raw'), w = cs.writable.getWriter();
+    (async () => { for (const c of chunks) await w.write(c); await w.close(); })();
+    const rd = cs.readable.getReader(), out = []; let size = 0;
+    for (;;) { const r = await rd.read(); if (r.done) break; out.push(r.value); size += r.value.length; }
+    return { parts: out, size: size };
+  } catch (e) { return null; }
+}
+
+async function zip(entries) {
+  const parts = [], central = [];
+  let offset = 0;
+  for (const e of entries) {
+    const nameBytes = enc.encode(e.name);
+    const rawSize = e.chunks.reduce((s, c) => s + c.length, 0);
+    const crc = crc32(e.chunks);
+    const def = e.store ? null : await deflateRaw(e.chunks);
+    const method = def ? 8 : 0, body = def ? def.parts : e.chunks, compSize = def ? def.size : rawSize;
+    const local = [u32(0x04034b50), u16(20), u16(0), u16(method), u16(0), u16(0),
+      u32(crc), u32(compSize), u32(rawSize), u16(nameBytes.length), u16(0), nameBytes];
+    parts.push.apply(parts, local); parts.push.apply(parts, body);
+    central.push(u32(0x02014b50), u16(20), u16(20), u16(0), u16(method), u16(0), u16(0),
+      u32(crc), u32(compSize), u32(rawSize), u16(nameBytes.length), u16(0), u16(0),
+      u16(0), u16(0), u32(0), u32(offset), nameBytes);
+    offset += local.reduce((s, c) => s + c.length, 0) + compSize;
+  }
+  const cdSize = central.reduce((s, c) => s + c.length, 0);
+  return parts.concat(central, [u32(0x06054b50), u16(0), u16(0), u16(entries.length), u16(entries.length),
+    u32(cdSize), u32(offset), u16(0)]);
+}
+
+/* style ids: 0 body(Calibri) 1 date 2 amount 3 title 4 subtitle 5 header 6 cell 7 cell-centre
+              8 cell-amount 9 total-label 10 total-amount 11 note 12 total-count            */
+const STYLES =
+  '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+  '<fonts count="7">' +
+  '<font><sz val="11"/><name val="Calibri"/><family val="2"/></font>' +
+  '<font><sz val="10"/><name val="Arial"/><family val="2"/></font>' +
+  '<font><b/><sz val="13"/><color rgb="FF1F3864"/><name val="Arial"/><family val="2"/></font>' +
+  '<font><sz val="10"/><color rgb="FF595959"/><name val="Arial"/><family val="2"/></font>' +
+  '<font><b/><sz val="10"/><color rgb="FFFFFFFF"/><name val="Arial"/><family val="2"/></font>' +
+  '<font><b/><sz val="10"/><name val="Arial"/><family val="2"/></font>' +
+  '<font><sz val="9"/><color rgb="FF595959"/><name val="Arial"/><family val="2"/></font>' +
+  '</fonts>' +
+  '<fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill>' +
+  '<fill><patternFill patternType="solid"><fgColor rgb="FF1F3864"/><bgColor indexed="64"/></patternFill></fill></fills>' +
+  '<borders count="4"><border><left/><right/><top/><bottom/><diagonal/></border>' +
+  '<border><left/><right/><top/><bottom style="thin"><color rgb="FFBFBFBF"/></bottom><diagonal/></border>' +
+  '<border><left/><right/><top style="thin"><color rgb="FF1F3864"/></top><bottom style="double"><color rgb="FF1F3864"/></bottom><diagonal/></border>' +
+  '<border><left/><right/><top/><bottom style="thin"><color rgb="FFBFBFBF"/></bottom><diagonal/></border></borders>' +
+  '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>' +
+  '<cellXfs count="13">' +
+  '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>' +
+  '<xf numFmtId="14" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>' +
+  '<xf numFmtId="4" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>' +
+  '<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/>' +
+  '<xf numFmtId="0" fontId="3" fillId="0" borderId="0" xfId="0" applyFont="1"/>' +
+  '<xf numFmtId="0" fontId="4" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>' +
+  '<xf numFmtId="0" fontId="1" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1"/>' +
+  '<xf numFmtId="0" fontId="1" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center"/></xf>' +
+  '<xf numFmtId="4" fontId="1" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyBorder="1"/>' +
+  '<xf numFmtId="0" fontId="5" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="right"/></xf>' +
+  '<xf numFmtId="4" fontId="5" fillId="0" borderId="2" xfId="0" applyNumberFormat="1" applyFont="1" applyBorder="1"/>' +
+  '<xf numFmtId="0" fontId="6" fillId="0" borderId="0" xfId="0" applyFont="1"/>' +
+  '<xf numFmtId="0" fontId="5" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="center"/></xf>' +
+  '</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
+
+function pkgParts(sheetName, extra) {
+  return {
+    '[Content_Types].xml':
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+      '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+      '<Default Extension="xml" ContentType="application/xml"/>' +
+      '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' +
+      '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>' +
+      '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>',
+    '_rels/.rels':
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+      '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>',
+    'xl/workbook.xml':
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' +
+      '<sheets><sheet name="' + xmlEsc(sheetName) + '" sheetId="1" r:id="rId1"/></sheets></workbook>',
+    'xl/_rels/workbook.xml.rels':
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+      '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>' +
+      '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>',
+    'xl/styles.xml': STYLES
+  };
+}
+
+async function pack(sheetName, sheetChunks) {
+  const parts = pkgParts(sheetName);
+  const entries = [];
+  for (const name in parts) entries.push({ name: name, chunks: [enc.encode(parts[name])] });
+  entries.splice(4, 0, { name: 'xl/worksheets/sheet1.xml', chunks: sheetChunks });
+  return zip(entries);
+}
+
+/* ---- Tool sheet (streamed, handles very large days) ---- */
+const TOOL_COLUMNS = ['Merchant Name', 'Merchant Address1', 'Merchant Address2', 'Statement Date',
+  'Merchant Number', 'Currency', 'Card Holder No.', 'Tran. Date', 'Trans. Batch No.',
+  'Trans. Amount', 'Trans. Commission', 'Trans. Net Value'];
+const TOOL_WIDTHS = [14.33, 16.78, 13, 13.89, 16, 8.22, 14.22, 9.55, 36.33, 12.89, 16.44, 14.55];
+
+function toolSheet(rows, currency) {
+  const chunks = [];
+  let b = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><cols>';
+  TOOL_WIDTHS.forEach((w, i) => { b += '<col min="' + (i + 1) + '" max="' + (i + 1) + '" width="' + w + '" customWidth="1"/>'; });
+  b += '</cols><sheetData><row r="1">';
+  TOOL_COLUMNS.forEach((h, i) => { b += '<c r="' + COLS[i] + '1" t="inlineStr"><is><t>' + xmlEsc(h) + '</t></is></c>'; });
+  b += '</row>';
+  const S = (c, r, v) => (v === '' || v == null) ? '' : '<c r="' + c + r + '" t="inlineStr"><is><t>' + xmlEsc(v) + '</t></is></c>';
+  const N = (c, r, v, s) => !isFinite(v) ? '' : '<c r="' + c + r + '"' + (s ? ' s="' + s + '"' : '') + '><v>' + v + '</v></c>';
+  rows.forEach((row, i) => {
+    const r = i + 2;
+    b += '<row r="' + r + '">' + S('A', r, row.merchantName) + S('B', r, row.address1) + S('C', r, row.address2) +
+      N('D', r, excelSerial(row.statementDate), 1) + S('E', r, row.merchantNumber) + S('F', r, currency);
+    const m = Number(row.cardHolder);
+    b += row.cardHolder === '' ? '' : (isFinite(m) && String(m) === row.cardHolder ? N('G', r, m) : S('G', r, row.cardHolder));
+    b += N('H', r, excelSerial(row.tranDate), 1) + S('I', r, row.batchNo) +
+      N('J', r, row.amount, 2) + N('K', r, row.commission, 2) + N('L', r, row.net, 2) + '</row>';
+    if (b.length > 1 << 20) { chunks.push(enc.encode(b)); b = ''; }
+  });
+  chunks.push(enc.encode(b + '</sheetData></worksheet>'));
+  return chunks;
+}
+const buildToolXlsx = (rows, currency) => pack('Transactions', toolSheet(rows, currency));
+
+/* ---- Variance sheet (styled, small) ---- */
+const VAR_HEAD = ['Transaction Date', 'Time', 'Merchant ID', 'Merchant Name', 'Terminal ID',
+  'System Reference', 'Network Reference', 'URN / Merchant Reference', 'Payer Scheme',
+  'Customer Mobile', 'Amount (EGP)', 'Status in Transaction Report', 'Status in Settlement Report'];
+const VAR_WIDTH = [17, 10, 14, 26, 12, 17, 37, 37, 14, 15, 14, 27, 27];
+
+function varianceSheet(ex, meta) {
+  const cell = (col, r, v, s, num) => v === '' || v == null ? '' :
+    (num ? '<c r="' + col + r + '" s="' + s + '"><v>' + v + '</v></c>'
+         : '<c r="' + col + r + '" s="' + s + '" t="inlineStr"><is><t>' + xmlEsc(v) + '</t></is></c>');
+  let b = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+    '<sheetViews><sheetView showGridLines="0" workbookViewId="0"><pane ySplit="5" topLeftCell="A6" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols>';
+  VAR_WIDTH.forEach((w, i) => { b += '<col min="' + (i + 1) + '" max="' + (i + 1) + '" width="' + w + '" customWidth="1"/>'; });
+  b += '</cols><sheetData>';
+  b += '<row r="1">' + cell('A', 1, (meta.brand || 'Wallet') + ' — Variance Report: Transaction Report vs. Settlement Report', 3) + '</row>';
+  b += '<row r="2">' + cell('A', 2, meta.line2, 4) + '</row>';
+  b += '<row r="3">' + cell('A', 3, meta.line3, 4) + '</row>';
+  b += '<row r="4"/>';
+  b += '<row r="5" ht="30" customHeight="1">';
+  VAR_HEAD.forEach((h, i) => { b += cell(COLS[i], 5, h, 5); });
+  b += '</row>';
+
+  const centre = { 0: 1, 1: 1, 2: 1, 4: 1, 8: 1, 11: 1, 12: 1 };
+  ex.forEach((e, i) => {
+    const r = 6 + i;
+    const vals = [e.date, e.time, e.merchantId, e.merchantName, e.terminal, e.sysRef, e.networkRef,
+      e.urn, e.scheme, e.mobile, e.amount, e.status || 'Approved',
+      e.side === 'Transaction report only' ? 'Not included' : 'Present (not in transaction report)'];
+    b += '<row r="' + r + '">';
+    vals.forEach((v, c) => {
+      if (c === 10) b += cell(COLS[c], r, v, 8, true);
+      else b += cell(COLS[c], r, v, centre[c] ? 7 : 6);
+    });
+    b += '</row>';
+  });
+
+  const tr = 6 + ex.length + 1;
+  b += '<row r="' + tr + '">' + cell('J', tr, 'Total', 9) +
+    '<c r="K' + tr + '" s="10"><f>SUM(K6:K' + (tr - 1) + ')</f></c>' +
+    '<c r="L' + tr + '" s="12"><f>COUNT(K6:K' + (tr - 1) + ')&amp;" transaction(s)"</f></c></row>';
+
+  let n = tr + 2;
+  b += '<row r="' + n + '">' + cell('A', n, 'Notes', 11) + '</row>';
+  meta.notes.forEach((line, i) => {
+    const r = n + 1 + i;
+    b += '<row r="' + r + '">' + cell('A', r, line, 11) + '</row>';
+  });
+  b += '</sheetData><autoFilter ref="A5:M' + (tr - 1) + '"/></worksheet>';
+  return [enc.encode(b)];
+}
+const buildVarianceXlsx = (ex, meta) => pack('Variance', varianceSheet(ex, meta));
+
+
+/* ---- Bank comparison sheet ---- */
+const BANK_HEAD = ['Statement Date', 'Transaction Date', 'Bank statement amount',
+  'Reconciliation amount', 'Variance', 'Missing records (AMS)', 'Residual variance', 'Status', 'Notes'];
+const BANK_WIDTH = [16, 17, 22, 22, 14, 22, 18, 18, 46];
+
+function bankSheet(rows, meta) {
+  const round2 = v => (v == null || !isFinite(v)) ? v : Math.round(v * 100) / 100;
+  const cell = (col, r, v, st, num) => v === '' || v == null ? '' :
+    (num ? '<c r="' + col + r + '" s="' + st + '"><v>' + v + '</v></c>'
+         : '<c r="' + col + r + '" s="' + st + '" t="inlineStr"><is><t>' + xmlEsc(v) + '</t></is></c>');
+  let b = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+    '<sheetViews><sheetView showGridLines="0" workbookViewId="0"><pane ySplit="5" topLeftCell="A6" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols>';
+  BANK_WIDTH.forEach((w, i) => { b += '<col min="' + (i + 1) + '" max="' + (i + 1) + '" width="' + w + '" customWidth="1"/>'; });
+  b += '</cols><sheetData>';
+  b += '<row r="1">' + cell('A', 1, (meta.brand || 'Wallet') + ' — Bank Statement vs. Reconciliation Sheet', 3) + '</row>';
+  b += '<row r="2">' + cell('A', 2, meta.line2, 4) + '</row>';
+  b += '<row r="3">' + cell('A', 3, meta.line3, 4) + '</row><row r="4"/>';
+  b += '<row r="5" ht="30" customHeight="1">';
+  BANK_HEAD.forEach((h, i) => { b += cell(COLS[i], 5, h, 5); });
+  b += '</row>';
+  rows.forEach((r, i) => {
+    const n = 6 + i;
+    b += '<row r="' + n + '">' +
+      cell('A', n, r.statementDate, 7) + cell('B', n, r.tranDate, 7) +
+      (r.bankNet == null ? '' : cell('C', n, round2(r.bankNet), 8, true)) +
+      (r.recNet == null ? '' : cell('D', n, round2(r.recNet), 8, true)) +
+      (r.diff == null ? '' : cell('E', n, round2(r.diff), 8, true)) +
+      cell('F', n, r.missingLabel || '', 7) +
+      (r.residual == null || !r.checked ? '' : cell('G', n, round2(r.residual), 8, true)) +
+      cell('H', n, r.status, 7) + cell('I', n, r.note || '', 6) + '</row>';
+  });
+  const t = 6 + rows.length + 1;
+  b += '<row r="' + t + '">' + cell('B', t, 'Total', 9) +
+    '<c r="C' + t + '" s="10"><f>SUM(C6:C' + (t - 1) + ')</f></c>' +
+    '<c r="D' + t + '" s="10"><f>SUM(D6:D' + (t - 1) + ')</f></c>' +
+    '<c r="E' + t + '" s="10"><f>SUM(E6:E' + (t - 1) + ')</f></c>' +
+    '<c r="G' + t + '" s="10"><f>SUM(G6:G' + (t - 1) + ')</f></c></row>';
+  let n = t + 2;
+  b += '<row r="' + n + '">' + cell('A', n, 'Notes', 11) + '</row>';
+  meta.notes.forEach((line, i) => {
+    b += '<row r="' + (n + 1 + i) + '">' + cell('A', n + 1 + i, line, 11) + '</row>';
+  });
+  b += '</sheetData></worksheet>';
+  return [enc.encode(b)];
+}
+const buildBankXlsx = (rows, meta) => pack('Bank vs Sheet', bankSheet(rows, meta));
+
+
+/* ---- Case log sheet ---- */
+const LOG_HEAD_X = ['Provider', 'Transaction Date', 'Statement Date', 'Issue', 'Missing records',
+  'Missing value (EGP)', 'Bank statement', 'Reconciliation sheet', 'Variance', 'Residual variance',
+  'Status', 'Reported on', 'Recorded on', 'Notes'];
+const LOG_WIDTH_X = [11, 17, 16, 20, 15, 19, 18, 20, 14, 17, 13, 14, 14, 50];
+const LOG_NUMCOL = { 4: 1, 5: 1, 6: 1, 7: 1, 8: 1, 9: 1 };
+const LOG_CENTRE = { 0: 1, 1: 1, 2: 1, 4: 1, 10: 1, 11: 1, 12: 1 };
+
+function logSheet(rows, meta) {
+  const cell = (col, r, v, st, num) => v === '' || v == null ? '' :
+    (num ? '<c r="' + col + r + '" s="' + st + '"><v>' + v + '</v></c>'
+         : '<c r="' + col + r + '" s="' + st + '" t="inlineStr"><is><t>' + xmlEsc(v) + '</t></is></c>');
+  let b = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+    '<sheetViews><sheetView showGridLines="0" workbookViewId="0"><pane ySplit="5" topLeftCell="A6" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols>';
+  LOG_WIDTH_X.forEach((w, i) => { b += '<col min="' + (i + 1) + '" max="' + (i + 1) + '" width="' + w + '" customWidth="1"/>'; });
+  b += '</cols><sheetData>';
+  b += '<row r="1">' + cell('A', 1, (meta.brand || 'Wallet') + ' — Reconciliation Case Log', 3) + '</row>';
+  b += '<row r="2">' + cell('A', 2, meta.line2, 4) + '</row>';
+  b += '<row r="3">' + cell('A', 3, meta.line3, 4) + '</row><row r="4"/>';
+  b += '<row r="5" ht="30" customHeight="1">';
+  LOG_HEAD_X.forEach((h, i) => { b += cell(COLS[i], 5, h, 5); });
+  b += '</row>';
+  rows.forEach((row, i) => {
+    const r = 6 + i;
+    b += '<row r="' + r + '">';
+    row.forEach((v, c) => {
+      if (LOG_NUMCOL[c] && v !== '' && v != null && isFinite(v)) b += cell(COLS[c], r, v, c === 4 ? 7 : 8, true);
+      else b += cell(COLS[c], r, v, LOG_CENTRE[c] ? 7 : 6);
+    });
+    b += '</row>';
+  });
+  const t = 6 + rows.length + 1;
+  b += '<row r="' + t + '">' + cell('D', t, 'Total', 9) +
+    '<c r="E' + t + '" s="10"><f>SUM(E6:E' + (t - 1) + ')</f></c>' +
+    '<c r="F' + t + '" s="10"><f>SUM(F6:F' + (t - 1) + ')</f></c>' +
+    '<c r="J' + t + '" s="10"><f>SUM(J6:J' + (t - 1) + ')</f></c></row>';
+  let n = t + 2;
+  b += '<row r="' + n + '">' + cell('A', n, 'Notes', 11) + '</row>';
+  meta.notes.forEach((line, i) => {
+    b += '<row r="' + (n + 1 + i) + '">' + cell('A', n + 1 + i, line, 11) + '</row>';
+  });
+  b += '</sheetData><autoFilter ref="A5:N' + (t - 1) + '"/></worksheet>';
+  return [enc.encode(b)];
+}
+const buildLogXlsx = (rows, meta) => pack('Case Log', logSheet(rows, meta));
+
+async function bundleZip(files) {
+  return zip(files.map(f => ({ name: f.name, chunks: [f.bytes], store: true })));
+}
+
+
+/* ================= BANK vs RECONCILIATION SHEET ================= */
+
+const norm = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim().toLowerCase();
+
+function headerMap(row) {
+  const map = {};
+  (row || []).forEach(function (h, i) { const k = norm(h); if (k && !(k in map)) map[k] = i; });
+  return map;
+}
+function pick(map, names) {
+  for (const n of names) { const i = map[norm(n)]; if (i !== undefined) return i; }
+  return -1;
+}
+const shiftDay = (d, n) => {
+  const t = new Date(Date.UTC(d.y, d.m, d.d) + n * DAY_MS);
+  return { y: t.getUTCFullYear(), m: t.getUTCMonth(), d: t.getUTCDate() };
+};
+const asDate = v => {
+  if (v && typeof v === 'object' && v.y !== undefined) return { y: v.y, m: v.m, d: v.d };
+  if (typeof v !== 'string') return null;
+  const t = v.trim();
+  let p = /^(\d{4})-(\d{2})-(\d{2})/.exec(t);
+  if (p) return { y: +p[1], m: +p[2] - 1, d: +p[3] };
+  p = /^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})/.exec(t);      // day first, as Egyptian banks write it
+  if (p) return { y: +p[3], m: +p[2] - 1, d: +p[1] };
+  return null;
+};
+
+/** The last date written inside a statement description, e.g. "... bacc10/08/2026 bacc11/08/2026". */
+const DESC_DATE = /(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})/g;
+function dateInText(text) {
+  let m, last = null;
+  DESC_DATE.lastIndex = 0;
+  while ((m = DESC_DATE.exec(String(text || '')))) last = m;
+  return last ? { y: +last[3], m: +last[2] - 1, d: +last[1] } : null;
+}
+
+/** Bank statement → wallet settlement net per underlying transaction date. */
+function readBankStatement(rows, opts) {
+  const o = Object.assign({ keyword: 'ORANGE', dateBasis: 'value-1' }, opts || {});
+  const DESC = ['description', 'narrative', 'details', 'transaction details', 'remarks'];
+  const DC = ['debit/credit', 'dr/cr', 'debit credit', 'cr/dr'];
+  const AMT = ['amount', 'transaction amount'];
+  let h = -1;
+  for (let i = 0; i < Math.min(rows.length, 80); i++) {
+    const map = headerMap(rows[i]);
+    if (pick(map, DESC) < 0) continue;
+    const hasFlag = pick(map, AMT) >= 0 && pick(map, DC) >= 0;
+    const hasPair = pick(map, ['debit']) >= 0 && pick(map, ['credit']) >= 0;
+    if (hasFlag || hasPair) { h = i; break; }
+  }
+  if (h < 0) throw new Error('no header row with a description column plus either an amount and a debit/credit flag, or separate debit and credit columns');
+  const map = headerMap(rows[h]);
+  const cDesc = pick(map, DESC);
+  const cAmt = pick(map, AMT);
+  const cDC = pick(map, DC);
+  const cDeb = pick(map, ['debit']);
+  const cCre = pick(map, ['credit']);
+  const splitCols = cDC < 0 && cDeb >= 0 && cCre >= 0;
+  const cVal = pick(map, ['value date', 'value dt']);
+  const cPost = pick(map, ['transaction date', 'posting date', 'date']);
+  const key = norm(o.keyword);
+
+  const byDay = {}, lines = [];
+  let scanned = 0, matched = 0, skippedNoDate = 0;
+  for (let i = h + 1; i < rows.length; i++) {
+    const r = rows[i];
+    if (!r || r[cDesc] == null) continue;
+    scanned++;
+    const desc = String(r[cDesc]);
+    if (key && norm(desc).indexOf(key) < 0) continue;
+    let amt, credit;
+    if (splitCols) {
+      const dr = typeof r[cDeb] === 'number' ? r[cDeb] : toNumber(r[cDeb]);
+      const cr = typeof r[cCre] === 'number' ? r[cCre] : toNumber(r[cCre]);
+      credit = isFinite(cr) && cr !== 0;
+      amt = credit ? cr : dr;
+    } else {
+      amt = typeof r[cAmt] === 'number' ? r[cAmt] : toNumber(r[cAmt]);
+      credit = /^c/i.test(String(r[cDC] || '').trim());
+    }
+    if (!isFinite(amt) || amt === 0) continue;
+    const value = cVal >= 0 ? asDate(r[cVal]) : null;
+    const post = cPost >= 0 ? asDate(r[cPost]) : null;
+    let base;
+    if (o.dateBasis === 'description') {
+      base = dateInText(desc);
+      if (!base) { skippedNoDate++; continue; }
+    } else if (o.dateBasis === 'posting') {
+      base = post;
+    } else {
+      base = value || post;
+      if (base && o.dateBasis === 'value-1') base = shiftDay(base, -1);
+    }
+    if (!base) continue;
+    const k = dateKey(base);
+    const signed = credit ? amt : -amt;
+    matched++;
+    const b = byDay[k] = byDay[k] || { net: 0, credit: 0, debit: 0, rows: 0 };
+    b.net += signed; b.rows++;
+    if (credit) b.credit += amt; else b.debit += amt;
+    lines.push({ tranDay: k, value: value, posting: post, desc: desc, amount: amt, credit: credit });
+  }
+  return { byDay: byDay, lines: lines, scanned: scanned, matched: matched,
+           skippedNoDate: skippedNoDate, headerRow: h };
+}
+
+/** Reconciliation sheet (portal output) → net per transaction date. */
+function readRecSheet(rows) {
+  const map = headerMap(rows[0]);
+  const cTran = pick(map, ['transaction date', 'tran. date', 'tran date']);
+  const cStmt = pick(map, ['statement date']);
+  const cNet = pick(map, ['transaction net value', 'trans. net value', 'net value']);
+  const cAmt = pick(map, ['transaction amount', 'trans. amount']);
+  const cCom = pick(map, ['transaction commission', 'trans. commission']);
+  if (cTran < 0 || cNet < 0)
+    throw new Error('the reconciliation sheet has no Transaction Date / Transaction Net Value columns');
+  const byDay = {};
+  for (let i = 1; i < rows.length; i++) {
+    const r = rows[i];
+    if (!r || r[cTran] == null) continue;
+    const d = asDate(r[cTran]);
+    if (!d) continue;
+    const k = dateKey(d);
+    const b = byDay[k] = byDay[k] || { net: 0, amount: 0, commission: 0, rows: 0, statementDate: '' };
+    const net = typeof r[cNet] === 'number' ? r[cNet] : toNumber(r[cNet]);
+    if (isFinite(net)) b.net += net;
+    if (cAmt >= 0) { const a = typeof r[cAmt] === 'number' ? r[cAmt] : toNumber(r[cAmt]); if (isFinite(a)) b.amount += a; }
+    if (cCom >= 0) { const c = typeof r[cCom] === 'number' ? r[cCom] : toNumber(r[cCom]); if (isFinite(c)) b.commission += c; }
+    b.rows++;
+    if (!b.statementDate && cStmt >= 0) { const s = asDate(r[cStmt]); if (s) b.statementDate = dateKey(s); }
+  }
+  return { byDay: byDay, days: Object.keys(byDay).sort() };
+}
+
+/** Streaming accumulator for very large reconciliation sheets. */
+function recAccumulator() {
+  let map = null, cTran = -1, cStmt = -1, cNet = -1, cAmt = -1, cCom = -1;
+  const byDay = {};
+  return {
+    push: function (row) {
+      if (!map) {
+        map = headerMap(row);
+        cTran = pick(map, ['transaction date', 'tran. date', 'tran date']);
+        cStmt = pick(map, ['statement date']);
+        cNet = pick(map, ['transaction net value', 'trans. net value', 'net value']);
+        cAmt = pick(map, ['transaction amount', 'trans. amount']);
+        cCom = pick(map, ['transaction commission', 'trans. commission']);
+        if (cTran < 0 || cNet < 0)
+          throw new Error('the reconciliation sheet has no Transaction Date / Transaction Net Value columns');
+        return true;
+      }
+      if (!row || row[cTran] == null) return true;
+      const d = asDate(row[cTran]);
+      if (!d) return true;
+      const k = dateKey(d);
+      const b = byDay[k] = byDay[k] || { net: 0, amount: 0, commission: 0, rows: 0, statementDate: '' };
+      const net = typeof row[cNet] === 'number' ? row[cNet] : toNumber(row[cNet]);
+      if (isFinite(net)) b.net += net;
+      if (cAmt >= 0) { const a = typeof row[cAmt] === 'number' ? row[cAmt] : toNumber(row[cAmt]); if (isFinite(a)) b.amount += a; }
+      if (cCom >= 0) { const c = typeof row[cCom] === 'number' ? row[cCom] : toNumber(row[cCom]); if (isFinite(c)) b.commission += c; }
+      b.rows++;
+      if (!b.statementDate && cStmt >= 0) { const s = asDate(row[cStmt]); if (s) b.statementDate = dateKey(s); }
+      return true;
+    },
+    finish: function () { return { byDay: byDay, days: Object.keys(byDay).sort() }; }
+  };
+}
+
+/** Line up the two sides, one row per transaction date. */
+function compareBank(bank, rec, opts) {
+  const o = Object.assign({ tolerance: 20, exceptionsByDay: {}, checkedDays: {} }, opts || {});
+  const holidays = new Set(o.holidays || []), weekend = new Set([5, 6]);
+  const keys = {};
+  Object.keys(bank ? bank.byDay : {}).forEach(k => { keys[k] = 1; });
+  Object.keys(rec ? rec.byDay : {}).forEach(k => { keys[k] = 1; });
+  const out = Object.keys(keys).sort().map(function (k) {
+    const b = bank && bank.byDay[k], r = rec && rec.byDay[k];
+    const bankNet = b ? b.net : null, recNet = r ? r.net : null;
+    const diff = (bankNet == null || recNet == null) ? null : bankNet - recNet;
+    const p = k.split('-');
+    const tran = { y: +p[0], m: +p[1] - 1, d: +p[2] };
+    const ex = o.exceptionsByDay[k];
+    const checked = !!o.checkedDays[k];
+    const missingNet = ex ? ex.net : 0;
+    const residual = diff == null ? null : diff - missingNet;
+    let status;
+    if (bankNet == null) status = 'No bank entry';
+    else if (recNet == null) status = 'Not in the sheet';
+    else if (!checked && Math.abs(diff) > o.tolerance) status = 'Not checked';
+    else if (Math.abs(residual) <= o.tolerance) status = (ex && ex.count) ? 'Explained' : 'Within tolerance';
+    else if (residual > 0) status = 'Bank higher';
+    else status = 'Sheet higher';
+    return {
+      checked: checked,
+      tranDate: k, tranDisp: dateDisp(tran),
+      statementDate: (r && r.statementDate) || dateKey(nextWorkingDay(tran, holidays, weekend)),
+      bankNet: bankNet, bankCredit: b ? b.credit : null, bankDebit: b ? b.debit : null, bankRows: b ? b.rows : 0,
+      recNet: recNet, recRows: r ? r.rows : 0, recAmount: r ? r.amount : null, recCommission: r ? r.commission : null,
+      diff: diff, status: status,
+      known: ex ? { count: ex.count, net: ex.net, gross: ex.gross == null ? ex.net : ex.gross } : null,
+      residual: residual
+    };
+  });
+  const totals = out.reduce(function (a, r) {
+    if (r.bankNet != null) a.bank += r.bankNet;
+    if (r.recNet != null) a.rec += r.recNet;
+    if (r.diff != null) a.diff += r.diff;
+    if (r.status === 'Bank higher' || r.status === 'Sheet higher' || r.status === 'Not checked') a.flagged++;
+    return a;
+  }, { bank: 0, rec: 0, diff: 0, flagged: 0 });
+  return { rows: out, totals: totals };
+}
+
+
+</script>
+
+<script>
+(function(){
+  "use strict";
+  var docs = [], batch = null, seq = 0;
+
+  /* ---------- providers ---------- */
+  var PROVIDERS = {
+    orange:   { label:'Orange',   slug:'Orange',   brand:'Orange Wallet',
+                mid:'10623877212', name:'Kashier Payment Solutions', keyword:'ORANGE',
+                basis:'value-1', tol:'20' },
+    etisalat: { label:'Etisalat', slug:'Etisalat', brand:'Etisalat Wallet',
+                mid:'10945831384', name:'Kashier', keyword:'GEFU', basis:'description', tol:'1' }
+  };
+  var PROV_KEY = 'wallet-recon-provider';
+  var CONF_KEY = 'wallet-recon-settings-v1';
+  var provider = 'orange';
+  var SETTING_IDS = ['f-hol','f-refund','f-sort','f-mdr','f-key','f-tol','f-basis','f-cur',
+                     'f-mname','f-mnum','f-a1','f-a2'];
+
+  function P(){ return PROVIDERS[provider]; }
+
+  function loadConf(){
+    try{ return JSON.parse(window.localStorage.getItem(CONF_KEY)) || {}; }catch(e){ return {}; }
+  }
+  function saveConf(){
+    var all = loadConf(), one = {};
+    SETTING_IDS.forEach(function(id){ one[id] = $(id).value; });
+    all[provider] = one;
+    try{ window.localStorage.setItem(CONF_KEY, JSON.stringify(all)); }catch(e){}
+  }
+  function applyConf(){
+    var saved = loadConf()[provider];
+    if(saved){
+      SETTING_IDS.forEach(function(id){ if(saved[id] !== undefined) $(id).value = saved[id]; });
+    } else {
+      $('f-key').value = P().keyword;
+      $('f-mnum').value = P().mid;
+      $('f-mname').value = P().name;
+      $('f-basis').value = P().basis;
+      $('f-tol').value = P().tol;
+    }
+    $('f-stmt').value = '';
+  }
+  function setProvider(k, opts){
+    opts = opts || {};
+    if(!PROVIDERS[k] || k === provider) return;
+    saveConf();
+    var dropped = 0;
+    if(!opts.keepDocs){        // reports belong to one provider — never mix them
+      dropped = docs.length;
+      docs = [];
+    }
+    provider = k;
+    try{ window.localStorage.setItem(PROV_KEY, k); }catch(e){}
+    Array.prototype.forEach.call(document.querySelectorAll('[data-prov]'), function(b){
+      b.setAttribute('aria-pressed', String(b.dataset.prov === k));
+    });
+    applyConf();
+    $('foot-prov').innerHTML = P().label + ' · join key <code>AMS.Original_Trancation = Report.System Reference</code>';
+    renderRail();
+    run();
+    if(typeof renderLog === 'function') renderLog();
+    if(opts.quiet) return;
+    setStatus('Switched to ' + P().label + '. Its own settings and log entries are now in view.' +
+      (dropped ? ' The ' + plural(dropped, 'file') + ' already loaded were cleared, since reports belong to one provider.' : ''));
+  }
+  var $ = function(id){ return document.getElementById(id); };
+  var fmt2 = function(n){
+    n = n || 0;
+    if(Math.abs(n) < 0.005) n = 0;                 // never print a signed zero
+    return n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  };
+  var fmtI = function(n){ return (n||0).toLocaleString('en-US'); };
+  var esc = function(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); };
+
+  function setStatus(m, err){ var s=$('status'); s.textContent=m; s.className='status'+(err?' err':''); }
+  function busy(on){ $('prog').className='bar-progress'+(on?' on':''); }
+
+  /* ---------- intake ---------- */
+  function addFiles(list){
+    var arr = Array.prototype.slice.call(list);
+    if(!arr.length) return;
+    busy(true); setStatus('Reading ' + arr.length + ' file(s)…');
+    var pending = arr.length, bad = [];
+    function done(){ if(--pending === 0) finish(bad); }
+
+    arr.forEach(function(file){
+      ingest(file).then(done).catch(function(e){
+        bad.push(file.name + ' — ' + (e.message || 'could not be read')); done();
+      });
+    });
+  }
+
+  /* read one file, optionally forcing what it should be treated as */
+  function ingest(file, forced){
+    if(/\.xlsx$/i.test(file.name)){
+      return file.arrayBuffer().then(function(buf){ return addWorkbook(file, new Uint8Array(buf), forced); });
+    }
+    return file.text().then(function(text){
+      var rows = parseCSV(text);
+      if(rows.length < 2) throw new Error('the file has no data rows');
+      var kind = forced || detectShape(rows);
+      if(!kind) throw new Error(describeUnknown(rows));
+      return storeRows(file, kind, rows, true);
+    });
+  }
+
+  /* what kind of report is this? decided on the columns, not the file name */
+  var SHAPES = [
+    { kind:'ams', min:4, marks:[[3,['original_trancation']],[2,['mdr']],[2,['net_amount']],[1,['consumer_amount','cr_dr']]] },
+    { kind:'tr',  min:4, marks:[[3,['system reference']],[2,['networkreference']],[2,['mobile']],[1,['urn','payer scheme name']]] },
+    { kind:'rec', min:4, marks:[[3,['transaction net value','trans. net value']],[2,['statement date']],
+                                [1,['transaction date','tran. date']],[1,['merchant number','merchant name']]] },
+    { kind:'bank',min:4, marks:[[2,['description','narrative','details','transaction details','remarks']],
+                                [3,['debit/credit','dr/cr','debit credit','cr/dr','type of transaction']],
+                                [3,['debit','credit']],[2,['value date','value dt']],
+                                [1,['balance','running balance']],[1,['amount','transaction amount']]] }
+  ];
+  function normCell(c){ return String(c == null ? '' : c).replace(/\s+/g,' ').trim().toLowerCase(); }
+  function scoreRow(cells, shape){
+    var total = 0;
+    shape.marks.forEach(function(m){
+      var weight = m[0], names = m[1];
+      if(names.length > 1 && weight === 3 && names[0] === 'debit'){
+        if(cells.indexOf('debit') >= 0 && cells.indexOf('credit') >= 0) total += weight;
+        return;
+      }
+      for(var i = 0; i < names.length; i++) if(cells.indexOf(names[i]) >= 0){ total += weight; return; }
+    });
+    return total;
+  }
+  function detectShape(rows){
+    var best = null, bestScore = 0;
+    var n = Math.min(rows.length, 80);
+    for(var i = 0; i < n; i++){
+      var cells = (rows[i] || []).map(normCell);
+      if(!cells.length) continue;
+      for(var k = 0; k < SHAPES.length; k++){
+        var sc = scoreRow(cells, SHAPES[k]);
+        if(sc >= SHAPES[k].min && sc > bestScore){ bestScore = sc; best = SHAPES[k].kind; }
+      }
+    }
+    return best;
+  }
+  function describeUnknown(rows){
+    var head = null, n = Math.min(rows.length, 80);
+    for(var i = 0; i < n; i++){
+      var cells = (rows[i] || []).filter(function(c){ return normCell(c); });
+      if(cells.length >= 3){ head = cells; break; }
+    }
+    return 'the columns were not recognised' +
+      (head ? ' — found: ' + head.slice(0, 8).map(normCell).join(', ') : '') +
+      '. Use the dropdown on the file to set what it is.';
+  }
+
+  /* build the parsed document first; only swap it in once it parses cleanly,
+     so a wrong role choice never loses the file */
+  function storeRows(file, kind, rows, isText){
+    var base = { id: ++seq, name: file.name, size: file.size, file: file }, doc;
+    if(kind === 'ams' || kind === 'tr'){
+      if(!isText) throw new Error('the AMS and transaction reports must be the .csv files as exported');
+      var rep = readReport(rows);
+      if(!rep.data.length) throw new Error('no transactions could be read');
+      doc = Object.assign(base, { role: kind, day: rep.day, rep: rep });
+    } else if(kind === 'bank'){
+      var bank = readBankStatement(rows, bankOptions());
+      doc = Object.assign(base, { role: 'bank', rows: rows, bank: bank, day: '' });
+    } else {
+      var acc = recAccumulator();
+      rows.forEach(acc.push);
+      var rec = acc.finish();
+      if(!rec.days.length) throw new Error('no transaction dates could be read from the sheet');
+      doc = Object.assign(base, { role: 'rec', rec: rec, day: rec.days[0], days: rec.days });
+    }
+    docs = docs.filter(function(d){ return d.name !== file.name; });
+    docs.push(doc);
+  }
+
+  /* work out whether a workbook is the bank statement or the reconciliation sheet */
+  function addWorkbook(file, bytes, forced){
+    return readSheet(bytes, { maxRows: 80 }).then(function(peek){
+      var kind = forced || detectShape(peek.rows);
+      if(!kind) throw new Error(describeUnknown(peek.rows));
+      if(kind === 'ams' || kind === 'tr')
+        throw new Error('the AMS and transaction reports must be the .csv files as exported, not .xlsx');
+      if(kind === 'bank'){
+        return readSheet(bytes).then(function(full){
+          var bank = readBankStatement(full.rows, bankOptions());
+          var doc = { id: ++seq, name: file.name, size: file.size, role: 'bank',
+                      rows: full.rows, bank: bank, day: '', file: file };
+          docs = docs.filter(function(d){ return d.name !== file.name; });
+          docs.push(doc);
+        });
+      }
+      var acc = recAccumulator();
+      return readSheet(bytes, { onRow: acc.push }).then(function(){
+        var rec = acc.finish();
+        if(!rec.days.length) throw new Error('no transaction dates could be read from the sheet');
+        var doc = { id: ++seq, name: file.name, size: file.size, role: 'rec',
+                    rec: rec, day: rec.days[0], days: rec.days, file: file };
+        docs = docs.filter(function(d){ return d.name !== file.name; });
+        docs.push(doc);
+      });
+    });
+  }
+
+  function bankOptions(){
+    return { keyword: $('f-key').value.trim(), dateBasis: $('f-basis').value };
+  }
+  function finish(bad){
+    busy(false); renderRail();
+    var guess = detectProvider();
+    if(guess && guess !== provider){
+      setProvider(guess, { keepDocs: true, quiet: true });
+      bad.unshift('These reports belong to ' + P().label + ', so the tool switched over.');
+    } else {
+      run();
+    }
+    if(bad.length) setStatus(bad.join(' · '), true);
+  }
+
+  /* which provider do the loaded reports belong to? */
+  function detectProvider(){
+    var seen = {};
+    docs.forEach(function(d){
+      if(d.role !== 'ams' && d.role !== 'tr') return;
+      var m = reportMid(d.rep);
+      if(m) seen[m] = 1;
+    });
+    var hit = '';
+    Object.keys(PROVIDERS).forEach(function(k){ if(seen[PROVIDERS[k].mid]) hit = k; });
+    return hit;
+  }
+
+  var drop = $('drop');
+  drop.addEventListener('click', function(){ $('picker').click(); });
+  ['dragenter','dragover'].forEach(function(e){
+    drop.addEventListener(e, function(ev){ ev.preventDefault(); drop.classList.add('over'); }); });
+  ['dragleave','drop'].forEach(function(e){
+    drop.addEventListener(e, function(){ drop.classList.remove('over'); }); });
+  drop.addEventListener('drop', function(ev){ ev.preventDefault(); addFiles(ev.dataTransfer.files); });
+  document.addEventListener('dragover', function(e){ e.preventDefault(); });
+  document.addEventListener('drop', function(e){ e.preventDefault(); });
+  $('picker').addEventListener('change', function(e){ addFiles(e.target.files); e.target.value=''; });
+
+  function renderRail(){
+    var rail = $('rail');
+    if(!docs.length){ rail.style.display='none'; drop.classList.remove('compact');
+      drop.querySelector('h2').textContent='Drop the AMS and Transaction reports here'; return; }
+    rail.style.display=''; drop.classList.add('compact');
+    drop.querySelector('h2').textContent='Drop more reports here';
+    docs.sort(function(a,b){ return a.day<b.day?-1:a.day>b.day?1:(a.role<b.role?-1:1); });
+    var ROLES = [['ams','AMS report'],['tr','Transaction report'],['bank','Bank statement'],['rec','Reconciliation sheet']];
+    rail.innerHTML = docs.map(function(d){
+      var span;
+      if(d.role==='bank') span = d.bank.matched + ' matching lines';
+      else if(d.role==='rec') span = d.days.length>1 ? d.days[0]+' → '+d.days[d.days.length-1] : d.day;
+      else span = d.rep.days.length>1 ? d.rep.days[0]+' → '+d.rep.days[d.rep.days.length-1] : d.day;
+      var opts = ROLES.map(function(r){
+        return '<option value="'+r[0]+'"'+(r[0]===d.role?' selected':'')+'>'+r[1]+'</option>'; }).join('');
+      return '<span class="chip"><select class="role-pick" data-role="'+d.id+'" title="Change what this file is">'+opts+'</select>'+
+        '<span class="dy">'+esc(span)+'</span>'+
+        '<span class="nm" title="'+esc(d.name)+'">'+esc(d.name)+'</span>'+
+        '<button class="x" data-rm="'+d.id+'" title="Remove this file">×</button></span>';
+    }).join('') + '<button class="add" id="add-more">Add files</button>';
+    $('add-more').addEventListener('click', function(){ $('picker').click(); });
+    Array.prototype.forEach.call(rail.querySelectorAll('[data-rm]'), function(b){
+      b.addEventListener('click', function(){
+        docs = docs.filter(function(d){ return d.id !== +b.dataset.rm; });
+        renderRail(); run();
+      });
+    });
+    Array.prototype.forEach.call(rail.querySelectorAll('[data-role]'), function(sel){
+      sel.addEventListener('change', function(){
+        var d = docs.filter(function(x){ return x.id === +sel.dataset.role; })[0];
+        if(!d || !d.file) return;
+        busy(true); setStatus('Re-reading ' + d.name + '…');
+        ingest(d.file, sel.value).then(function(){
+          busy(false); setStatus(''); renderRail(); run();
+        }).catch(function(e){
+          busy(false); renderRail();
+          setStatus(d.name + ' — ' + (e.message || 'could not be read as that'), true);
+        });
+      });
+    });
+  }
+
+  /* ---------- settings ---------- */
+  ['f-stmt'].concat(SETTING_IDS).forEach(function(id){
+    $(id).addEventListener('change', function(){ saveConf(); run(); });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-prov]'), function(b){
+    b.addEventListener('click', function(){ setProvider(b.dataset.prov); });
+  });
+  function options(){
+    return {
+      merchantName: $('f-mname').value.trim(), merchantAddress1: $('f-a1').value.trim(),
+      merchantAddress2: $('f-a2').value.trim(), merchantNumber: $('f-mnum').value.trim(),
+      currency: $('f-cur').value.trim() || 'EGP',
+      holidays: $('f-hol').value.split(/[,;\s]+/).filter(Boolean),
+      sort: $('f-sort').value, refundCardHolder: $('f-refund').value,
+      absCommission: $('f-mdr').value === 'abs', expectMid: $('f-mnum').value.trim(),
+      statementDate: $('f-stmt').value
+    };
+  }
+
+  /* ---------- run ---------- */
+  function run(){
+    batch = null;
+    ['dl-all','dl-var','copy-refs'].forEach(function(id){ $(id).disabled = true; });
+    $('dl-note').textContent = '';
+    renderBank();
+    if(!docs.filter(function(d){ return d.role==='ams'||d.role==='tr'; }).length){
+      $('band').style.display='none'; $('notices').innerHTML='';
+      $('days-table').innerHTML='<tbody><tr><td class="empty">No days loaded yet.</td></tr></tbody>';
+      $('exc-table').innerHTML='<tbody><tr><td class="empty">No exceptions found.</td></tr></tbody>';
+      $('tab-exc').textContent='';
+      if(!docs.length) setStatus('Load one or more pairs of reports to begin.');
+      else setStatus('');
+      return;
+    }
+    var parts = {}, clashes = [];
+    docs.filter(function(d){ return d.role==='ams' || d.role==='tr'; }).forEach(function(d){
+      d.rep.days.forEach(function(day){
+        var slot = parts[day] = parts[day] || {label:day, ams:[], tr:[], src:{ams:[],tr:[]}};
+        slot[d.role].push(sliceDay(d.rep, day));
+        slot.src[d.role].push(d.name);
+      });
+    });
+    var byDay = {}, carried = [];
+    Object.keys(parts).forEach(function(day){
+      var slot = parts[day], out = { label: day };
+      ['ams','tr'].forEach(function(role){
+        if(!slot[role].length) return;
+        var key = role === 'ams' ? 'Original_Trancation' : 'System Reference';
+        out[role] = slot[role].length === 1 ? slot[role][0] : mergeSlices(slot[role], key);
+        if(slot[role].length > 1){
+          var late = out[role].sources.filter(function(x){ return x.fileDay && x.fileDay !== day && x.rows; });
+          late.forEach(function(x){
+            carried.push(plural(x.rows, 'transaction') + ' dated ' + day + ' were found in the ' +
+              x.fileDay + ' ' + (role==='ams'?'settlement':'transaction') + ' report and counted against ' + day + '.');
+          });
+        }
+      });
+      byDay[day] = out;
+    });
+    var pairs = [], lonely = [];
+    Object.keys(byDay).sort().forEach(function(k){
+      var p = byDay[k];
+      if(p.ams && p.tr) pairs.push(p);
+      else lonely.push(k + ' (' + (p.ams ? 'Transaction Report' : 'AMS report') + ' missing)');
+    });
+    if(!pairs.length){
+      $('band').style.display='none';
+      setStatus('Waiting for the matching report — ' + lonely.join(', '), true);
+      return;
+    }
+    busy(true); setStatus('Matching ' + pairs.length + ' day(s) on the reference key…');
+    setTimeout(function(){
+      try{ batch = reconcileBatch(pairs, options()); render(lonely, carried); renderBank();
+            refreshCaptureButtons(); setStatus(''); }
+      catch(e){ setStatus(e.message, true); }
+      busy(false);
+    }, 30);
+  }
+
+  /* ---------- render ---------- */
+  function render(lonely, carried){
+    carried = carried || [];
+    var days = batch.days, ex = batch.exceptions;
+    var matched = 0, uns = 0, notes = [];
+    days.forEach(function(d){ if(d.ok){ matched += d.stats.matched; uns += d.stats.unsettled;
+      d.notes.forEach(function(n){
+        if(n.indexOf('minus sign removed') >= 0) return;   // shown in the day's own detail
+        notes.push(d.day + ' — ' + n);
+      }); } });
+
+    $('band').style.display='';
+    $('s-days').textContent = fmtI(days.length);
+    $('s-matched').textContent = fmtI(matched);
+    $('s-exc').textContent = fmtI(ex.length);
+    $('s-uns').textContent = fmt2(uns);
+    $('c-exc').className = 'cell ' + (ex.length ? 'flag' : 'good');
+    $('c-uns').className = 'cell ' + (Math.abs(uns) > 0.004 ? 'flag' : 'good');
+    $('tab-exc').textContent = ex.length ? '(' + ex.length + ')' : '';
+
+    var n = [];
+    lonely.forEach(function(l){ n.push(l.indexOf('appears in two') > 0 ? l : 'No pair for ' + l + ' — that day was skipped.'); });
+
+    notes.forEach(function(x){ n.push(x); });
+    days.forEach(function(d){ if(!d.ok) n.push(d.day + ' — ' + d.error); });
+    var carryHtml = carried.length
+      ? '<div class="notice ok"><h3>Carried over from a later report</h3><ul>' +
+        carried.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('') +
+        '<li>Nothing here needs to be reported — the transactions are settled, just written into the following day\u2019s file.</li>' +
+        '</ul></div>'
+      : '';
+    if(n.length){
+      $('notices').innerHTML = carryHtml + '<div class="notice"><h3>Check before sending</h3><ul>' +
+        n.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div>';
+    } else if(!ex.length){
+      $('notices').innerHTML = carryHtml + '<div class="notice ok"><h3>Controls</h3><ul>' +
+        '<li>Every transaction matched on both sides across all ' + days.length + ' day(s).</li>' +
+        '<li>Amount − Commission = Net Value on all ' + fmtI(matched) + ' rows.</li></ul></div>';
+    } else {
+      $('notices').innerHTML = carryHtml + '<div class="notice"><h3>Result</h3><ul><li>' + fmtI(ex.length) +
+        ' transaction(s) appear on one side only, with an unsettled value of EGP ' + fmt2(uns) +
+        '. See the Exceptions tab.</li></ul></div>';
+    }
+
+    // days table
+    var h = '<thead><tr><th>Transaction date</th><th>Statement date</th><th style="text-align:right">Report txns</th>' +
+      '<th style="text-align:right">Settlement txns</th><th style="text-align:right">Matched</th>' +
+      '<th style="text-align:right">Unsettled (EGP)</th><th>Status</th><th></th></tr></thead><tbody>';
+    days.forEach(function(d, i){
+      if(!d.ok){
+        h += '<tr><td class="m">'+esc(d.day)+'</td><td colspan="6">'+esc(d.error)+'</td><td></td></tr>';
+        return;
+      }
+      var s = d.stats, bad = s.exceptions > 0;
+      h += '<tr class="clickable" data-day="'+i+'"><td class="m">'+esc(d.day)+'</td><td class="m">'+esc(s.statementDate)+'</td>' +
+        '<td class="n">'+fmtI(s.trRows)+'</td><td class="n">'+fmtI(s.amsRows)+'</td><td class="n">'+fmtI(s.matched)+'</td>' +
+        '<td class="n'+(Math.abs(s.unsettled)>0.004?' neg':'')+'">'+fmt2(s.unsettled)+'</td>' +
+        '<td><span class="pill '+(bad?'bad':'ok')+'">'+(bad? s.exceptions+' exception'+(s.exceptions>1?'s':'') :'Balanced')+'</span></td>' +
+        '<td style="text-align:right"><button class="iconbtn" data-dl="'+i+'">↓ Tool file</button></td></tr>';
+      h += '<tr class="detail" id="det-'+i+'" hidden><td colspan="8"><div class="detailgrid">' +
+        kv('Report gross (signed)', fmt2(s.trGross)) + kv('Settlement gross', fmt2(s.amsGross)) +
+        kv('Variance', fmt2(s.variance)) + kv('Commission (MDR)', fmt2(s.amsMdr)) +
+        kv('Net settled', fmt2(s.amsNet)) + refundCells(s) +
+        (s.carried ? kv('Carried from a later file', plural(s.carried, 'row') + ' · ' + s.carriedFrom.join(', ')) : '') +
+        '</div>' + (d.notes.length ? '<div class="detailnote' + (d.notes.join(' ').indexOf('carried into') >= 0 ? ' calm' : '') + '">' +
+          esc(d.notes.join(' · ')) + '</div>' : '') + '</td></tr>';
+    });
+    $('days-table').innerHTML = h + '</tbody>';
+    Array.prototype.forEach.call($('days-table').querySelectorAll('[data-day]'), function(tr){
+      tr.addEventListener('click', function(e){
+        if(e.target.dataset.dl) return;
+        var d = $('det-' + tr.dataset.day); d.hidden = !d.hidden;
+      });
+    });
+    Array.prototype.forEach.call($('days-table').querySelectorAll('[data-dl]'), function(b){
+      b.addEventListener('click', function(e){ e.stopPropagation(); downloadDay(+b.dataset.dl); });
+    });
+
+    // exceptions table
+    if(ex.length){
+      var loadedAms = {};
+      docs.forEach(function(d){ if(d.role === 'ams') d.rep.days.forEach(function(x){ loadedAms[x] = 1; }); });
+      var unchecked = [];
+      ex.forEach(function(x){
+        if(x.side !== 'Transaction report only') return;
+        var next = new Date(Date.UTC(+x.dayKey.slice(0,4), +x.dayKey.slice(5,7)-1, +x.dayKey.slice(8,10)) + 86400000)
+          .toISOString().slice(0,10);
+        if(!loadedAms[next] && unchecked.indexOf(next) < 0) unchecked.push(next);
+      });
+      $('exc-note').innerHTML = unchecked.length
+        ? '<div class="warnbox">A transaction processed late is written into the <b>next day\u2019s</b> settlement report while ' +
+          'keeping its own date, so it looks missing until that report is loaded. Load the settlement report for ' +
+          unchecked.sort().join(', ') + ' before reporting anything below.</div>'
+        : '<div class="notice ok" style="margin:0 0 16px"><h3>Checked against the next day</h3><ul><li>' +
+          'The settlement report for the day after each exception is loaded, so these are genuinely absent from both files.' +
+          '</li></ul></div>';
+      var e2 = '<thead><tr><th>Date</th><th>Time</th><th>Present in</th><th>System Reference</th><th>Scheme</th>' +
+        '<th>Customer mobile</th><th style="text-align:right">Amount (EGP)</th><th>Network Reference</th></tr></thead><tbody>';
+      ex.forEach(function(x){
+        e2 += '<tr><td class="m">'+esc(x.date)+'</td><td class="m">'+esc(x.time)+'</td>' +
+          '<td>'+(x.side==='Transaction report only'?'Transaction report':'Settlement report')+' only</td>' +
+          '<td class="m">'+esc(x.sysRef)+'</td><td>'+esc(x.scheme||'—')+'</td><td class="m">'+esc(x.mobile||'—')+'</td>' +
+          '<td class="n'+(x.amount<0?' neg':'')+'">'+fmt2(x.amount)+'</td><td class="m">'+esc(x.networkRef||'—')+'</td></tr>';
+      });
+      $('exc-table').innerHTML = e2 + '</tbody>';
+      $('dl-var').disabled = false; $('copy-refs').disabled = false;
+    } else {
+      $('exc-table').innerHTML = '<tbody><tr><td class="empty">No exceptions — every transaction matched on both sides.</td></tr></tbody>';
+      $('exc-note').innerHTML = '';
+    }
+
+    $('dl-all').disabled = !days.some(function(d){ return d.ok && d.rows.length; });
+  }
+  function kv(k, v){ return '<div><div class="dk">'+k+'</div><div class="dv">'+v+'</div></div>'; }
+
+  var bankCmp = null;
+  function renderBank(){
+    bankCmp = null;
+    $('dl-bank').disabled = true; $('copy-bank').disabled = true; $('bank-count').textContent = '';
+    var bankDoc = docs.filter(function(d){ return d.role==='bank'; })[0];
+    var recDoc  = docs.filter(function(d){ return d.role==='rec'; })[0];
+    var tbl = $('bank-table');
+    if(!bankDoc && !recDoc){
+      tbl.innerHTML = '<tbody><tr><td class="empty">Drop the bank statement and the reconciliation sheet (.xlsx) to compare them.</td></tr></tbody>';
+      return;
+    }
+    if(!bankDoc || !recDoc){
+      tbl.innerHTML = '<tbody><tr><td class="empty">Waiting for the ' +
+        (bankDoc ? 'reconciliation sheet' : 'bank statement') + '.</td></tr></tbody>';
+      return;
+    }
+    var bank;
+    try{ bank = readBankStatement(bankDoc.rows, bankOptions()); }
+    catch(e){ tbl.innerHTML = '<tbody><tr><td class="empty">' + esc(e.message) + '</td></tr></tbody>'; return; }
+    if(bank.skippedNoDate && bank.matched === 0){
+      tbl.innerHTML = '<tbody><tr><td class="empty">' + fmtI(bank.skippedNoDate) +
+        ' matching bank line(s) had no date in the description. Change the bank date basis in Settings.</td></tr></tbody>';
+      return;
+    }
+    if(!bank.matched){
+      tbl.innerHTML = '<tbody><tr><td class="empty">No bank line contains "' +
+        esc($('f-key').value.trim()) + '". Change the keyword in Settings.</td></tr></tbody>';
+      return;
+    }
+    var known = {}, checked = {};
+    if(batch) batch.days.forEach(function(d){
+      if(!d.ok) return;
+      checked[d.day] = true;
+      if(!d.stats.unsettledCount) return;
+      // the bank settles net of commission, so discount the gross by the day's own effective rate
+      var rate = d.stats.amsGross ? d.stats.amsMdr / d.stats.amsGross : 0;
+      known[d.day] = { count: d.stats.unsettledCount, gross: d.stats.unsettled,
+                       net: d.stats.unsettled * (1 - rate) };
+    });
+    var tol = parseFloat($('f-tol').value) || 0;
+    bankCmp = compareBank(bank, recDoc.rec, { tolerance: tol, exceptionsByDay: known,
+                                              checkedDays: checked, holidays: options().holidays });
+
+    var flagged = 0;
+    var h = '<thead><tr><th>Statement date</th><th>Transaction date</th><th style="text-align:right">Bank statement</th>' +
+      '<th style="text-align:right">Reconciliation sheet</th><th style="text-align:right">Variance</th>' +
+      '<th>Missing records (AMS)</th><th style="text-align:right">Residual variance</th><th>Status</th></tr></thead><tbody>';
+    bankCmp.rows.forEach(function(r){
+      var off = r.status === 'Bank higher' || r.status === 'Sheet higher' || r.status === 'Not checked';
+      if(off) flagged++;
+      r.missingLabel = missingLabel(r);
+      r.note = noteFor(r);
+      h += '<tr><td class="m">'+esc(r.statementDate)+'</td><td class="m">'+esc(r.tranDate)+'</td>' +
+        '<td class="n">'+(r.bankNet==null?'—':fmt2(r.bankNet))+'</td>' +
+        '<td class="n">'+(r.recNet==null?'—':fmt2(r.recNet))+'</td>' +
+        '<td class="n'+(r.diff!=null&&Math.abs(r.diff)>parseFloat($('f-tol').value||0)?' neg':'')+'">'+(r.diff==null?'—':fmt2(r.diff))+'</td>' +
+        '<td'+(r.known?'':' style="color:var(--ink-faint)"')+'>'+esc(r.missingLabel)+'</td>' +
+        '<td class="n'+(off?' neg':'')+'">'+((r.residual==null||!r.checked)?'—':fmt2(r.residual))+'</td>' +
+        '<td><span class="pill '+(off?'bad':(r.diff==null?'neutral':'ok'))+'">'+esc(r.status)+'</span></td></tr>';
+      if(r.status !== 'Within tolerance' && r.diff != null)
+        h += '<tr class="subnote'+(off?' warn':'')+'"><td colspan="8">'+esc(r.note)+'</td></tr>';
+    });
+    tbl.innerHTML = h + '</tbody>';
+    $('bank-count').textContent = flagged ? '(' + flagged + ')' : '';
+    $('dl-bank').disabled = false; $('copy-bank').disabled = false;
+    refreshCaptureButtons();
+  }
+
+  function missingLabel(r){
+    if(r.bankNet == null || r.recNet == null) return '—';
+    if(!r.checked) return 'Not checked';
+    if(!r.known) return 'None found';
+    return r.known.count + ' txn · ' + fmt2(r.known.net) + ' net';
+  }
+
+  function noteFor(r){
+    if(r.bankNet == null) return 'No matching bank line for this date.';
+    if(r.recNet == null) return 'This date is not covered by the reconciliation sheet.';
+    var bits = [];
+    if(r.status === 'Explained')
+      bits.push('The variance is accounted for by ' + r.known.count + ' transaction(s) missing from the AMS report (EGP ' +
+        fmt2(r.known.gross) + ' gross, about ' + fmt2(r.known.net) + ' net of commission). Nothing else is outstanding.');
+    if(r.status === 'Not checked')
+      bits.push('The AMS and transaction reports for ' + r.tranDate + ' have not been loaded, so it is not yet known whether missing records explain this variance. Do not report this figure until they are checked.');
+    if(r.status === 'Bank higher')
+      bits.push('Still about EGP ' + fmt2(r.residual) + ' more in the bank than the sheet accounts for, after allowing for the missing records.');
+    if(r.status === 'Sheet higher')
+      bits.push('The bank settled about EGP ' + fmt2(Math.abs(r.residual)) + ' less than the sheet claims — check for transactions that were not settled.');
+    if(r.bankRows) bits.push('Bank side: credit ' + fmt2(r.bankCredit) + ' less refunds ' + fmt2(r.bankDebit) +
+      ', taken from ' + r.bankRows + ' statement line' + (r.bankRows > 1 ? 's' : '') + '.');
+    return bits.join(' ');
+  }
+
+  $('dl-bank').addEventListener('click', function(){
+    var rows = bankCmp.rows, tol = parseFloat($('f-tol').value) || 0;
+    var basis = $('f-basis').options[$('f-basis').selectedIndex].text;
+    var meta = {
+      line2: 'Bank statement lines containing "' + $('f-key').value.trim() + '"  |  credits less debits  |  amounts in EGP',
+      line3: 'Date basis: ' + basis + '  |  accepted difference: ' + fmt2(tol),
+      brand: P().brand,
+      notes: [
+        '1.  Bank statement amount = credits less debits of the matching bank lines for the same transaction day.',
+        '2.  Reconciliation amount = total Transaction Net Value in the reconciliation sheet, refunds already negative.',
+        '3.  Variance = bank statement amount less reconciliation amount. A positive figure means the bank settled more than the sheet claims.',
+        '4.  Missing records (AMS) = transactions found in the transaction report but absent from the AMS report for the same day, shown net of commission. "Not checked" means those two reports were not loaded for that day.',
+        '5.  Residual variance = variance less missing records. This is the figure to report; the raw variance on its own overstates the difference whenever records are missing.',
+        '6.  A residual within EGP ' + fmt2(tol) + ' is treated as the known recurring difference.'
+      ]
+    };
+    busy(true); setStatus('Writing the comparison…');
+    buildBankXlsx(rows, meta).then(function(parts){
+      var nm = P().slug + '_Wallet_Bank_vs_Sheet.xlsx';
+      save(parts, nm, XLSX_MIME);
+      busy(false); setStatus('Saved ' + nm + ' — ' + rows.length + ' day(s).');
+    }).catch(function(e){ busy(false); setStatus('Could not write the file: ' + e.message, true); });
+  });
+
+  $('copy-bank').addEventListener('click', function(){
+    var lines = ['Statement Date\tTransaction Date\tBank statement amount\tReconciliation amount\tVariance\tMissing records (AMS)\tResidual variance\tStatus'];
+    bankCmp.rows.forEach(function(r){
+      lines.push([r.statementDate, r.tranDate, r.bankNet==null?'':fmt2(r.bankNet),
+        r.recNet==null?'':fmt2(r.recNet), r.diff==null?'':fmt2(r.diff),
+        r.missingLabel||'', (r.residual==null||!r.checked)?'':fmt2(r.residual), r.status].join('\t'));
+    });
+    var ta = document.createElement('textarea');
+    ta.value = lines.join('\n'); ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); setStatus('Comparison copied — paste it straight into the email.'); }
+    catch(e){ setStatus('Copy failed — use the export instead.', true); }
+    document.body.removeChild(ta);
+  });
+  function refundCells(s){
+    var same = s.trRefundCount === s.amsRefundCount && Math.abs(s.trRefund - s.amsRefund) < 0.005;
+    if(same) return kv('Refunds — both sides', s.trRefundCount + ' / ' + fmt2(s.trRefund));
+    return kv('Refunds — report', s.trRefundCount + ' / ' + fmt2(s.trRefund)) +
+           kv('Refunds — settlement', s.amsRefundCount + ' / ' + fmt2(s.amsRefund));
+  }
+
+  /* ---------- tabs ---------- */
+  Array.prototype.forEach.call(document.querySelectorAll('[data-tab]'), function(b){
+    b.addEventListener('click', function(){
+      Array.prototype.forEach.call(document.querySelectorAll('[data-tab]'), function(o){
+        o.setAttribute('aria-selected', String(o === b));
+        $('tab-' + o.dataset.tab).hidden = (o !== b);
+      });
+    });
+  });
+
+  /* ---------- downloads ---------- */
+  function save(parts, name, type){
+    var blob = new Blob(parts, {type: type});
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 5000);
+    return blob.size;
+  }
+  var XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+  function toolName(day){
+    var p = day.split('-');
+    return 'Wallet_' + P().slug + '_' + Number(p[2]) + '_' + MONTH_NAMES[Number(p[1])-1] + '_' + p[0] + '_Tool.xlsx';
+  }
+
+  function downloadDay(i){
+    var d = batch.days[i];
+    busy(true); setStatus('Writing ' + toolName(d.day) + '…');
+    buildToolXlsx(d.rows, options().currency).then(function(parts){
+      var kb = save(parts, toolName(d.day), XLSX_MIME);
+      busy(false); setStatus('Saved ' + toolName(d.day) + ' — ' + fmtI(d.rows.length) + ' rows, ' + (kb/1048576).toFixed(1) + ' MB.');
+    }).catch(function(e){ busy(false); setStatus('Could not write the file: ' + e.message, true); });
+  }
+
+  $('dl-all').addEventListener('click', function(){
+    var usable = batch.days.filter(function(d){ return d.ok && d.rows.length; });
+    if(usable.length === 1) return downloadDay(batch.days.indexOf(usable[0]));
+    busy(true); setStatus('Writing ' + usable.length + ' workbooks…');
+    var cur = options().currency, made = [], i = 0;
+    (function next(){
+      if(i >= usable.length){
+        bundleZip(made).then(function(parts){
+          var sz = save(parts, 'Wallet_' + P().slug + '_Tool_Files.zip', 'application/zip');
+          busy(false);
+          setStatus('Saved Wallet_' + P().slug + '_Tool_Files.zip — ' + made.length + ' workbooks, ' + (sz/1048576).toFixed(1) + ' MB.');
+        });
+        return;
+      }
+      var d = usable[i++];
+      setStatus('Writing ' + i + ' of ' + usable.length + '…');
+      buildToolXlsx(d.rows, cur).then(function(parts){
+        var total = parts.reduce(function(s,p){ return s + p.length; }, 0);
+        var buf = new Uint8Array(total), off = 0;
+        parts.forEach(function(p){ buf.set(p, off); off += p.length; });
+        made.push({ name: toolName(d.day), bytes: buf });
+        setTimeout(next, 0);
+      }).catch(function(e){ busy(false); setStatus('Failed on ' + d.day + ': ' + e.message, true); });
+    })();
+  });
+
+  $('dl-var').addEventListener('click', function(){
+    var ex = batch.exceptions, days = batch.days.filter(function(d){ return d.ok; });
+    var first = ex[0] || {};
+    var period = days.length ? (days[0].day + ' to ' + days[days.length-1].day) : '';
+    var lateCount = ex.filter(function(x){ return x.time === '23:59:59'; }).length;
+    var notes = ['1.  All transactions listed carry the response "0 - Approved" in the Transaction Report and do not appear in the AMS Transactions Report of the same day.'];
+    var k = 2;
+    if(lateCount) notes.push(k++ + '.  ' + lateCount + ' of ' + ex.length + ' transaction(s) are timestamped 11:59:59 PM, at the daily cut-off.');
+    days.forEach(function(d){
+      if(!d.stats.exceptions) return;
+      notes.push(k++ + '.  Control check — ' + d.day + ':  Transaction Report ' + fmtI(d.stats.trRows) +
+        ' transactions  vs.  Settlement Report ' + fmtI(d.stats.amsRows) +
+        ' transactions  =  variance of EGP ' + fmt2(d.stats.unsettled) + '.');
+    });
+    notes.push(k + '.  Amounts are gross transaction values before MDR. Refunds are shown as negative values.');
+    var meta = {
+      line2: 'Merchant: ' + (first.merchantName || options().merchantName || '—') +
+             '  |  MID: ' + (first.merchantId || options().merchantNumber || '—') +
+             (first.terminal ? '  |  Terminal: ' + first.terminal : ''),
+      line3: 'Period: ' + period + '  |  Matched on System Reference = Original_Trancation  |  Amounts in EGP',
+      brand: P().brand,
+      notes: notes
+    };
+    busy(true); setStatus('Writing the variance sheet…');
+    buildVarianceXlsx(ex, meta).then(function(parts){
+      var nm = P().slug + '_Wallet_Variance.xlsx';
+      save(parts, nm, XLSX_MIME);
+      busy(false); setStatus('Saved ' + nm + ' — ' + plural(ex.length, 'transaction') + '.');
+    }).catch(function(e){ busy(false); setStatus('Could not write the sheet: ' + e.message, true); });
+  });
+
+  $('copy-refs').addEventListener('click', function(){
+    var text = batch.exceptions.map(function(x){
+      return [x.date, x.time, x.sysRef, x.networkRef, fmt2(x.amount)].join('\t'); }).join('\n');
+    var ta = document.createElement('textarea');
+    ta.value = 'Date\tTime\tSystem Reference\tNetwork Reference\tAmount\n' + text;
+    ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); setStatus('Copied ' + plural(batch.exceptions.length, 'reference') + ' to the clipboard.'); }
+    catch(e){ setStatus('Copy failed — use the export instead.', true); }
+    document.body.removeChild(ta);
+  });
+
+  /* ==========================================================
+     Case log — a lasting record of the days that had a problem
+     ========================================================== */
+  var LOG_KEY = 'wallet-recon-log-v1';
+  var THEME_KEY = 'wallet-recon-theme';
+  var entries = [], storageOK = true, openId = null, stripPick = '';
+  var MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  function loadLog(){
+    try{
+      var raw = window.localStorage.getItem(LOG_KEY);
+      entries = raw ? JSON.parse(raw) : [];
+      if(!Array.isArray(entries)) entries = [];
+      storageOK = true;
+    }catch(e){ entries = []; storageOK = false; }
+    // entries saved before the tool knew about providers were all Orange
+    var migrated = 0;
+    entries.forEach(function(e){ if(!e.provider){ e.provider = 'orange'; migrated++; } });
+    if(migrated) persist();
+  }
+  function persist(){
+    try{ window.localStorage.setItem(LOG_KEY, JSON.stringify(entries)); return true; }
+    catch(e){ storageOK = false; renderLog(); return false; }
+  }
+  function stamp(){ return new Date().toISOString().slice(0,10); }
+  function plural(n, one, many){ return n + ' ' + (n === 1 ? one : (many || one + 's')); }
+  function r2(v){ return v == null || !isFinite(v) ? v : Math.round(v * 100) / 100; }
+  function byDate(a,b){ return a.tranDate < b.tranDate ? 1 : a.tranDate > b.tranDate ? -1 : 0; }
+
+  /* ---------- theme ---------- */
+  var SUN = '<svg width="15" height="15" viewBox="0 0 20 20" fill="none" aria-hidden="true">' +
+    '<circle cx="10" cy="10" r="4.2" stroke="currentColor" stroke-width="1.5"/>' +
+    '<path d="M10 1.6v2.2M10 16.2v2.2M18.4 10h-2.2M3.8 10H1.6M15.9 4.1l-1.6 1.6M5.7 14.3l-1.6 1.6M15.9 15.9l-1.6-1.6M5.7 5.7L4.1 4.1" ' +
+    'stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+  var MOON = '<svg width="15" height="15" viewBox="0 0 20 20" fill="none" aria-hidden="true">' +
+    '<path d="M16.5 12.3A7 7 0 0 1 7.7 3.5a7 7 0 1 0 8.8 8.8Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>';
+  function applyTheme(t){
+    var dark = t === 'dark';
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    var b = $('theme');
+    b.innerHTML = dark ? SUN : MOON;
+    b.title = dark ? 'Switch to the light theme' : 'Switch to the dark theme';
+    b.setAttribute('aria-label', b.title);
+    try{ window.localStorage.setItem(THEME_KEY, t); }catch(e){}
+  }
+  (function initTheme(){
+    var saved = null;
+    try{ saved = window.localStorage.getItem(THEME_KEY); }catch(e){}
+    if(!saved) saved = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+    applyTheme(saved);
+  })();
+  $('theme').addEventListener('click', function(){
+    applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+  });
+
+  /* ---------- capture ---------- */
+  /* Build a candidate record for every day that needs attention. */
+  function candidates(){
+    var out = {};
+    if(batch) batch.days.forEach(function(d){
+      if(!d.ok || !d.stats.unsettledCount) return;
+      var refs = d.exceptions.filter(function(e){ return e.side === 'Transaction report only'; })
+        .map(function(e){
+          return { date:e.date, time:e.time, sysRef:e.sysRef, networkRef:e.networkRef,
+                   urn:e.urn, scheme:e.scheme, mobile:e.mobile, amount:e.amount };
+        });
+      out[d.day] = {
+        provider: provider,
+        tranDate: d.day, statementDate: d.stats.statementDate, kind: 'missing',
+        missingCount: d.stats.unsettledCount, missingGross: r2(d.stats.unsettled),
+        refs: refs, bankNet: null, recNet: null, variance: null, residual: null
+      };
+    });
+    if(bankCmp) bankCmp.rows.forEach(function(r){
+      var off = r.status === 'Bank higher' || r.status === 'Sheet higher' || r.status === 'Not checked';
+      if(!off && !out[r.tranDate]) return;          // clean day with nothing else against it
+      if(r.bankNet == null || r.recNet == null) return;
+      var c = out[r.tranDate] || { provider: provider, tranDate:r.tranDate, statementDate:r.statementDate,
+                                   kind:'variance', missingCount:0, missingGross:0, refs:[] };
+      c.statementDate = r.statementDate || c.statementDate;
+      c.bankNet = r2(r.bankNet); c.recNet = r2(r.recNet); c.variance = r2(r.diff);
+      c.residual = r.checked ? r2(r.residual) : null;
+      c.kind = c.missingCount ? 'both' : 'variance';
+      c.checked = r.checked;
+      out[r.tranDate] = c;
+    });
+    return Object.keys(out).sort().map(function(k){ return out[k]; });
+  }
+
+  function captureFlagged(){
+    var found = candidates();
+    if(!found.length){ setLogStatus('Nothing to record — no day is currently flagged.'); return; }
+    var added = 0, updated = 0;
+    found.forEach(function(c){
+      var held = null;
+      for(var i=0;i<entries.length;i++)
+        if(entries[i].tranDate === c.tranDate && (entries[i].provider || 'orange') === provider){ held = entries[i]; break; }
+      if(!held){
+        entries.push(Object.assign({ id: 'e' + Date.now() + Math.random().toString(36).slice(2,7),
+          provider: provider, status:'open', note:'', reportedOn:'', createdAt: stamp(), updatedAt: stamp() }, c));
+        added++;
+        return;
+      }
+      if(held.status === 'resolved') return;      // never reopen a closed case silently
+      var before = JSON.stringify([held.missingCount, held.variance, held.residual, held.refs.length]);
+      held.statementDate = c.statementDate || held.statementDate;
+      held.kind = c.kind; held.missingCount = c.missingCount; held.missingGross = c.missingGross;
+      if(c.refs.length) held.refs = c.refs;
+      if(c.bankNet != null){ held.bankNet = c.bankNet; held.recNet = c.recNet;
+                             held.variance = c.variance; held.residual = c.residual; }
+      if(JSON.stringify([held.missingCount, held.variance, held.residual, held.refs.length]) !== before){
+        held.updatedAt = stamp(); updated++;
+      }
+    });
+    entries.sort(byDate);
+    persist(); renderLog(); refreshCaptureButtons();
+    var msg = [];
+    if(added) msg.push(added + ' day' + (added>1?'s':'') + ' added');
+    if(updated) msg.push(updated + ' updated');
+    if(!msg.length) msg.push('Already up to date — nothing changed');
+    setLogStatus(msg.join(', ') + '.');
+    setStatus(msg.join(', ') + ' in the case log.');
+  }
+
+  function refreshCaptureButtons(){
+    var n = candidates().length;
+    ['log-days','log-bank'].forEach(function(id){
+      var b = $(id);
+      b.disabled = !n;
+      b.textContent = n ? 'Save ' + n + ' flagged day' + (n>1?'s':'') + ' to the log' : 'Save flagged days to the log';
+    });
+  }
+  $('log-days').addEventListener('click', captureFlagged);
+  $('log-bank').addEventListener('click', captureFlagged);
+
+  /* ---------- filters ---------- */
+  function filters(){
+    return { status:$('lf-status').value, kind:$('lf-kind').value, prov:$('lf-prov').value,
+             from:$('lf-from').value, to:$('lf-to').value,
+             q:$('lf-q').value.trim().toLowerCase() };
+  }
+  function visible(){
+    var f = filters();
+    return entries.filter(function(e){
+      if(f.prov !== 'all' && (e.provider || 'orange') !== provider) return false;
+      if(f.status === 'unresolved'){ if(e.status === 'resolved') return false; }
+      else if(f.status !== 'all' && e.status !== f.status) return false;
+      if(f.kind !== 'all' && e.kind !== f.kind) return false;
+      if(f.from && e.tranDate < f.from) return false;
+      if(f.to && e.tranDate > f.to) return false;
+      if(stripPick && e.tranDate !== stripPick) return false;
+      if(f.q){
+        var hay = [e.tranDate, e.statementDate, e.note, e.status, e.reportedOn]
+          .concat(e.refs.map(function(r){ return r.sysRef + ' ' + r.networkRef + ' ' + r.urn + ' ' + r.mobile; }))
+          .join(' ').toLowerCase();
+        if(hay.indexOf(f.q) < 0) return false;
+      }
+      return true;
+    });
+  }
+  ['lf-status','lf-kind','lf-prov','lf-from','lf-to'].forEach(function(id){
+    $(id).addEventListener('change', function(){ stripPick=''; renderLog(); });
+  });
+  $('lf-q').addEventListener('input', function(){ stripPick=''; renderLog(); });
+  $('lf-clear').addEventListener('click', function(){
+    $('lf-status').value='all'; $('lf-kind').value='all'; $('lf-prov').value='current';
+    $('lf-from').value=''; $('lf-to').value=''; $('lf-q').value='';
+    stripPick=''; renderLog();
+  });
+
+  /* ---------- render ---------- */
+  var KIND_LABEL = { missing:'Missing records', variance:'Bank variance', both:'Missing + variance' };
+
+  function renderLog(){
+    $('log-warn').innerHTML = storageOK ? '' :
+      '<div class="warnbox">This browser is not letting the tool save the log, so entries will disappear when you close the page. ' +
+      'Back up to a file to keep them.</div>';
+
+    var mine = entries.filter(function(e){ return (e.provider || 'orange') === provider; });
+    var openCount = mine.filter(function(e){ return e.status !== 'resolved'; }).length;
+    $('log-count').textContent = openCount ? '(' + openCount + ')' : '';
+    $('log-xlsx').disabled = !entries.length;
+    $('log-refs').disabled = !entries.some(function(e){ return e.status !== 'resolved' && e.refs.length; });
+    $('log-backup').disabled = !entries.length;
+    $('log-wipe').disabled = !entries.length;
+
+    renderStrip();
+
+    var rows = visible().slice().sort(byDate);
+    var t = $('log-table');
+    if(!entries.length){
+      t.innerHTML = '<tbody><tr><td class="empty">Nothing recorded yet. Reconcile a day, then use “Save flagged days to the log”.</td></tr></tbody>';
+      return;
+    }
+    if(!rows.length){
+      t.innerHTML = '<tbody><tr><td class="empty">No entry matches these filters.</td></tr></tbody>';
+      return;
+    }
+    var h = '<thead><tr><th>Transaction date</th><th>Statement date</th><th>Issue</th>' +
+      '<th style="text-align:right">Missing</th><th style="text-align:right">Variance</th>' +
+      '<th style="text-align:right">Residual</th><th>Status</th><th>Updated</th><th></th></tr></thead><tbody>';
+    rows.forEach(function(e){
+      var pill = e.status === 'open' ? 'bad' : e.status === 'reported' ? 'warn' : 'ok';
+      h += '<tr class="logrow ' + e.status + ' clickable" data-open="' + e.id + '">' +
+        '<td class="m">' + esc(e.tranDate) + '</td>' +
+        '<td class="m mute">' + esc(e.statementDate || '—') + '</td>' +
+        '<td>' + esc(KIND_LABEL[e.kind] || e.kind) + '</td>' +
+        '<td class="n">' + (e.missingCount ? e.missingCount + ' · ' + fmt2(e.missingGross) : '—') + '</td>' +
+        '<td class="n">' + (e.variance == null ? '—' : fmt2(e.variance)) + '</td>' +
+        '<td class="n' + (e.residual != null && Math.abs(e.residual) > 20 ? ' neg' : '') + '">' +
+          (e.residual == null ? '—' : fmt2(e.residual)) + '</td>' +
+        '<td><span class="pill ' + pill + '">' + esc(e.status) + '</span></td>' +
+        '<td class="m mute">' + esc(e.updatedAt) + '</td>' +
+        '<td style="text-align:right"><button class="iconbtn" data-open="' + e.id + '">' +
+          (openId === e.id ? 'Hide' : 'Details') + '</button></td></tr>';
+      if(openId === e.id) h += '<tr class="detail"><td colspan="9">' + editor(e) + '</td></tr>';
+    });
+    t.innerHTML = h + '</tbody>';
+
+    Array.prototype.forEach.call(t.querySelectorAll('[data-open]'), function(el){
+      el.addEventListener('click', function(ev){
+        ev.stopPropagation();
+        openId = openId === el.dataset.open ? null : el.dataset.open;
+        renderLog();
+      });
+    });
+    wireEditor();
+  }
+
+  function editor(e){
+    var h = '<div class="editor">';
+    if(e.refs.length){
+      h += '<div class="refs"><table><thead><tr><th>Time</th><th>System Reference</th><th>Network Reference</th>' +
+        '<th>Scheme</th><th>Customer mobile</th><th style="text-align:right">Amount</th></tr></thead><tbody>';
+      e.refs.forEach(function(r){
+        h += '<tr><td class="m">' + esc(r.time) + '</td><td class="m">' + esc(r.sysRef) + '</td>' +
+          '<td class="m mute">' + esc(r.networkRef) + '</td><td>' + esc(r.scheme || '—') + '</td>' +
+          '<td class="m">' + esc(r.mobile || '—') + '</td><td class="n">' + fmt2(r.amount) + '</td></tr>';
+      });
+      h += '</tbody></table></div>';
+    }
+    if(e.bankNet != null){
+      h += '<div class="detailgrid" style="border:1px solid var(--line);border-radius:4px;overflow:hidden">' +
+        '<div><div class="dk">Bank statement</div><div class="dv">' + fmt2(e.bankNet) + '</div></div>' +
+        '<div><div class="dk">Reconciliation sheet</div><div class="dv">' + fmt2(e.recNet) + '</div></div>' +
+        '<div><div class="dk">Variance</div><div class="dv">' + fmt2(e.variance) + '</div></div>' +
+        '<div><div class="dk">Residual</div><div class="dv">' + (e.residual == null ? 'not checked' : fmt2(e.residual)) + '</div></div>' +
+        '</div>';
+    }
+    h += '<div><label class="eyebrow" for="note-' + e.id + '" style="display:block;margin-bottom:6px">What happened, and what you sent</label>' +
+      '<textarea id="note-' + e.id + '" data-note="' + e.id + '" placeholder="e.g. included in the email sent on 12 August, ticket ORG-4471">' +
+      esc(e.note || '') + '</textarea></div>';
+    h += '<div class="row">' +
+      '<button class="iconbtn" data-set="open|' + e.id + '">Mark open</button>' +
+      '<button class="iconbtn" data-set="reported|' + e.id + '">Mark reported today</button>' +
+      '<button class="iconbtn" data-set="resolved|' + e.id + '">Mark resolved</button>' +
+      '<span class="mute" style="font-size:11.5px;color:var(--ink-3)">' +
+        'Recorded ' + esc(e.createdAt) + (e.reportedOn ? ' · reported ' + esc(e.reportedOn) : '') + '</span>' +
+      '<span class="spacer"></span>' +
+      '<button class="iconbtn" data-copy="' + e.id + '">Copy references</button>' +
+      '<button class="iconbtn" data-del="' + e.id + '">Delete</button></div>';
+    return h + '</div>';
+  }
+
+  function find(id){ for(var i=0;i<entries.length;i++) if(entries[i].id === id) return entries[i]; return null; }
+
+  function wireEditor(){
+    var t = $('log-table');
+    Array.prototype.forEach.call(t.querySelectorAll('[data-note]'), function(el){
+      el.addEventListener('click', function(ev){ ev.stopPropagation(); });
+      el.addEventListener('change', function(){
+        var e = find(el.dataset.note); if(!e) return;
+        e.note = el.value; e.updatedAt = stamp();
+        if(persist()) setLogStatus('Note saved for ' + e.tranDate + '.');
+      });
+    });
+    Array.prototype.forEach.call(t.querySelectorAll('[data-set]'), function(b){
+      b.addEventListener('click', function(ev){
+        ev.stopPropagation();
+        var parts = b.dataset.set.split('|'), e = find(parts[1]);
+        if(!e) return;
+        e.status = parts[0];
+        if(parts[0] === 'reported') e.reportedOn = stamp();
+        if(parts[0] === 'open') e.reportedOn = '';
+        e.updatedAt = stamp();
+        persist(); renderLog();
+        setLogStatus(e.tranDate + ' marked ' + parts[0] + '.');
+      });
+    });
+    Array.prototype.forEach.call(t.querySelectorAll('[data-del]'), function(b){
+      b.addEventListener('click', function(ev){
+        ev.stopPropagation();
+        var e = find(b.dataset.del); if(!e) return;
+        if(!window.confirm('Delete the record for ' + e.tranDate + '? This cannot be undone.')) return;
+        entries = entries.filter(function(x){ return x.id !== e.id; });
+        openId = null; persist(); renderLog(); refreshCaptureButtons();
+        setLogStatus('Deleted the record for ' + e.tranDate + '.');
+      });
+    });
+    Array.prototype.forEach.call(t.querySelectorAll('[data-copy]'), function(b){
+      b.addEventListener('click', function(ev){
+        ev.stopPropagation();
+        var e = find(b.dataset.copy); if(!e || !e.refs.length){ setLogStatus('That day has no references to copy.'); return; }
+        var lines = ['Date\tTime\tSystem Reference\tNetwork Reference\tScheme\tCustomer mobile\tAmount'];
+        e.refs.forEach(function(r){
+          lines.push([r.date, r.time, r.sysRef, r.networkRef, r.scheme, r.mobile, fmt2(r.amount)].join('\t'));
+        });
+        clip(lines.join('\n'), plural(e.refs.length, 'reference') + ' copied.');
+      });
+    });
+  }
+
+  function clip(text, okMsg){
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); setLogStatus(okMsg); }
+    catch(e){ setLogStatus('Copy failed — use the export instead.', true); }
+    document.body.removeChild(ta);
+  }
+  function setLogStatus(m, err){
+    var s = $('log-status'); s.textContent = m || ''; s.className = 'status' + (err ? ' err' : '');
+  }
+
+  /* ---------- day strip ---------- */
+  function renderStrip(){
+    var body = $('strip-body');
+    if(!visible().length && !entries.length){
+      body.innerHTML = '<div style="color:var(--ink-3);font-size:12.5px">' +
+        'Once days are recorded they appear here, one cell per day, so a whole month reads at a glance.</div>';
+      return;
+    }
+    var byMonth = {};
+    entries.filter(function(e){
+      return $('lf-prov').value === 'all' || (e.provider || 'orange') === provider;
+    }).forEach(function(e){
+      var k = e.tranDate.slice(0,7);
+      (byMonth[k] = byMonth[k] || {})[+e.tranDate.slice(8,10)] = e;
+    });
+    var months = Object.keys(byMonth).sort();
+    var h = '';
+    months.forEach(function(k){
+      var y = +k.slice(0,4), m = +k.slice(5,7);
+      var last = new Date(Date.UTC(y, m, 0)).getUTCDate();
+      h += '<div class="month"><span class="mlab">' + MONTH_SHORT[m-1] + ' ' + y + '</span><span class="days">';
+      for(var d = 1; d <= last; d++){
+        var e = byMonth[k][d];
+        var key = k + '-' + String(d).padStart(2,'0');
+        h += e
+          ? '<button class="day has ' + e.status + (stripPick === key ? ' sel' : '') + '" data-day="' + key +
+            '" title="' + esc(key + ' — ' + (KIND_LABEL[e.kind]||e.kind) + ', ' + e.status) + '">' + d + '</button>'
+          : '<span class="day" title="' + key + '">' + d + '</span>';
+      }
+      h += '</span></div>';
+    });
+    body.innerHTML = h;
+    Array.prototype.forEach.call(body.querySelectorAll('[data-day]'), function(b){
+      b.addEventListener('click', function(){
+        stripPick = stripPick === b.dataset.day ? '' : b.dataset.day;
+        renderLog();
+        setLogStatus(stripPick ? 'Showing ' + stripPick + ' only. Click the day again to show everything.' : '');
+      });
+    });
+  }
+
+  /* ---------- exports ---------- */
+  var LOG_HEAD = ['Transaction Date','Statement Date','Issue','Missing records','Missing value (EGP)',
+    'Bank statement','Reconciliation sheet','Variance','Residual variance','Status','Reported on','Recorded on','Notes'];
+  var LOG_WIDTH = [17,16,20,15,19,18,20,14,17,13,14,14,50];
+
+  function logRowsXlsx(list){
+    return list.map(function(e){
+      return [(PROVIDERS[e.provider || 'orange'] || {label:e.provider}).label,
+        e.tranDate, e.statementDate || '', KIND_LABEL[e.kind] || e.kind,
+        e.missingCount || '', e.missingCount ? e.missingGross : '',
+        e.bankNet == null ? '' : e.bankNet, e.recNet == null ? '' : e.recNet,
+        e.variance == null ? '' : e.variance, e.residual == null ? '' : e.residual,
+        e.status.charAt(0).toUpperCase() + e.status.slice(1), e.reportedOn || '', e.createdAt, e.note || ''];
+    });
+  }
+
+  $('log-xlsx').addEventListener('click', function(){
+    var list = visible().slice().sort(function(a,b){ return a.tranDate < b.tranDate ? -1 : 1; });
+    if(!list.length){ setLogStatus('No entry matches these filters.'); return; }
+    var open = list.filter(function(e){ return e.status !== 'resolved'; });
+    var meta = {
+      line2: 'Merchant: ' + ($('f-mname').value.trim() || '—') + '  |  MID: ' + ($('f-mnum').value.trim() || '—') +
+             '  |  ' + plural(list.length, 'day') + ' on record, ' + open.length + ' still open',
+      line3: 'Period: ' + list[0].tranDate + ' to ' + list[list.length-1].tranDate + '  |  amounts in ' + ($('f-cur').value.trim() || 'EGP'),
+      brand: P().brand,
+      notes: [
+        '1.  Each row is one transaction day where the reconciliation did not close cleanly.',
+        '2.  Missing records are transactions present in the transaction report but absent from the AMS report of the same day.',
+        '3.  Variance is the bank statement less the reconciliation sheet; residual variance is that figure after allowing for the missing records.',
+        '4.  Status is maintained by hand: open means unreported, reported means raised with the provider, resolved means closed.'
+      ]
+    };
+    busy(true); setLogStatus('Writing the log…');
+    buildLogXlsx(logRowsXlsx(list), meta).then(function(parts){
+      var nm = P().slug + '_Wallet_Case_Log.xlsx';
+      save(parts, nm, XLSX_MIME);
+      busy(false); setLogStatus('Saved ' + nm + ' — ' + plural(list.length, 'day') + '.');
+    }).catch(function(e){ busy(false); setLogStatus('Could not write the file: ' + e.message, true); });
+  });
+
+  $('log-refs').addEventListener('click', function(){
+    var refs = [];
+    visible().filter(function(e){ return e.status !== 'resolved'; })
+      .sort(function(a,b){ return a.tranDate < b.tranDate ? -1 : 1; })
+      .forEach(function(e){ e.refs.forEach(function(r){
+        refs.push({ date:r.date, time:r.time, merchantId:$('f-mnum').value.trim(),
+          merchantName:$('f-mname').value.trim(), terminal:'', sysRef:r.sysRef, networkRef:r.networkRef,
+          urn:r.urn, scheme:r.scheme, mobile:r.mobile, amount:r.amount,
+          status:'Approved', side:'Transaction report only' });
+      }); });
+    if(!refs.length){ setLogStatus('No open day has references to export.'); return; }
+    var days = {}; refs.forEach(function(r){ days[r.date] = 1; });
+    var meta = {
+      line2: 'Merchant: ' + ($('f-mname').value.trim() || '—') + '  |  MID: ' + ($('f-mnum').value.trim() || '—'),
+      line3: 'Open days from the case log  |  ' + plural(refs.length, 'transaction') + ' across ' + plural(Object.keys(days).length, 'day') + '  |  amounts in EGP',
+      brand: P().brand,
+      notes: [
+        '1.  All transactions listed carry the response "0 - Approved" in the Transaction Report and do not appear in the AMS Transactions Report of the same day.',
+        '2.  These are the days still open in our reconciliation log; days already resolved are not included.',
+        '3.  Amounts are gross transaction values before MDR.'
+      ]
+    };
+    busy(true); setLogStatus('Writing the variance sheet…');
+    buildVarianceXlsx(refs, meta).then(function(parts){
+      var nm = P().slug + '_Wallet_Open_Variances.xlsx';
+      save(parts, nm, XLSX_MIME);
+      busy(false); setLogStatus('Saved ' + nm + ' — ' + plural(refs.length, 'transaction') + '.');
+    }).catch(function(e){ busy(false); setLogStatus('Could not write the file: ' + e.message, true); });
+  });
+
+  $('log-backup').addEventListener('click', function(){
+    var blob = new Blob([JSON.stringify({ version:1, savedAt:new Date().toISOString(), entries:entries }, null, 2)],
+      { type:'application/json' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = 'wallet_case_log_' + stamp() + '.json';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
+    setLogStatus('Backed up ' + plural(entries.length, 'entry', 'entries') + '.');
+  });
+
+  $('log-restore').addEventListener('click', function(){ $('restore-picker').click(); });
+  $('restore-picker').addEventListener('change', function(ev){
+    var file = ev.target.files[0]; ev.target.value = '';
+    if(!file) return;
+    file.text().then(function(text){
+      var data = JSON.parse(text);
+      var list = Array.isArray(data) ? data : data.entries;
+      if(!Array.isArray(list)) throw new Error('this file has no entries');
+      var seen = {}; entries.forEach(function(e){ seen[(e.provider || 'orange') + '|' + e.tranDate] = e; });
+      var added = 0, merged = 0;
+      list.forEach(function(e){
+        if(!e || !e.tranDate) return;
+        e.provider = e.provider || 'orange';
+        e.refs = e.refs || []; e.status = e.status || 'open';
+        e.createdAt = e.createdAt || stamp(); e.updatedAt = e.updatedAt || stamp();
+        e.id = e.id || 'e' + Date.now() + Math.random().toString(36).slice(2,7);
+        var key = e.provider + '|' + e.tranDate, held = seen[key];
+        if(!held){ entries.push(e); seen[key] = e; added++; return; }
+        if((e.updatedAt || '') > (held.updatedAt || '')){
+          entries = entries.map(function(x){ return x.id === held.id ? e : x; });
+          seen[key] = e; merged++;
+        }
+      });
+      entries.sort(byDate); persist(); renderLog(); refreshCaptureButtons();
+      setLogStatus('Restored — ' + added + ' added, ' + merged + ' updated, the rest already matched.');
+    }).catch(function(e){ setLogStatus('That file could not be read: ' + e.message, true); });
+  });
+
+  $('log-wipe').addEventListener('click', function(){
+    if(!window.confirm('Erase all ' + plural(entries.length, 'entry', 'entries') + '? Back up first if you might need them.')) return;
+    entries = []; openId = null; persist(); renderLog(); refreshCaptureButtons();
+    setLogStatus('The log is empty.');
+  });
+
+  (function initProvider(){
+    var saved = null;
+    try{ saved = window.localStorage.getItem(PROV_KEY); }catch(e){}
+    provider = PROVIDERS[saved] ? saved : 'orange';
+    Array.prototype.forEach.call(document.querySelectorAll('[data-prov]'), function(b){
+      b.setAttribute('aria-pressed', String(b.dataset.prov === provider));
+    });
+    applyConf();
+    $('foot-prov').innerHTML = P().label + ' · join key <code>AMS.Original_Trancation = Report.System Reference</code>';
+  })();
+
+  loadLog();
+  renderLog();
+  refreshCaptureButtons();
+
+})();
+
+</script>
+</body>
+</html>

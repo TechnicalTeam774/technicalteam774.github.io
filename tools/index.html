@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>أدوات العمليات المالية — Kashier</title>
+<meta name="description" content="أدوات المطابقة والتسوية اليومية — Financial Operations">
+<meta name="theme-color" content="#17222E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link id="fav" rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='9' fill='%2317222E'/%3E%3Cg fill='%23fff'%3E%3Crect x='7.5' y='9' width='2.8' height='22' rx='1.4'/%3E%3Crect x='13' y='9' width='1.6' height='22' rx='.8'/%3E%3Crect x='17.3' y='9' width='3.4' height='22' rx='1.7'/%3E%3Crect x='23.4' y='9' width='1.6' height='22' rx='.8'/%3E%3Crect x='27.8' y='9' width='2.8' height='22' rx='1.4'/%3E%3C/g%3E%3C/svg%3E">
+<style>
+:root{
+  --paper:#F2F5F8; --card:#FFFFFF; --sunk:#E9EEF3;
+  --ink:#17222E; --ink2:#2E3D4E; --mute:#5B6B7C; --faint:#8798A9;
+  --rule:#D5DDE6; --hair:#E6ECF1; --focus:#2563A8;
+  --live:#15694A; --r:8px;
+}
+@media(prefers-color-scheme:dark){:root{
+  --paper:#0F161D; --card:#161F29; --sunk:#111922;
+  --ink:#E7EEF5; --ink2:#C2CFDC; --mute:#8CA0B3; --faint:#6B7E92;
+  --rule:#26323E; --hair:#1D2832; --focus:#6AA5E8; --live:#6CC8A1;
+}}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--paper); color:var(--ink);
+  font-family:'IBM Plex Sans Arabic','IBM Plex Sans',system-ui,sans-serif;
+  font-size:14px; line-height:1.6; -webkit-font-smoothing:antialiased;
+}
+:focus-visible{outline:2px solid var(--focus);outline-offset:3px;border-radius:4px}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+
+header{background:var(--ink);color:#EEF3F8}
+.hin{max-width:1060px;margin:0 auto;padding:26px 24px 28px}
+.mark{width:34px;height:34px;display:block;margin-bottom:14px}
+h1{margin:0;font-size:21px;font-weight:600;letter-spacing:-.01em}
+.lede{margin:7px 0 0;font-size:14px;color:#9FB2C4;max-width:62ch}
+
+main{max-width:1060px;margin:0 auto;padding:30px 24px 70px}
+.secth{display:flex;align-items:baseline;gap:12px;margin:0 0 4px}
+.secth h2{margin:0;font-size:15px;font-weight:600}
+.secth span{font-size:12.5px;color:var(--faint)}
+.sechint{margin:0 0 16px;font-size:13px;color:var(--mute);max-width:70ch}
+
+.apps{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+a.app{
+  display:block;text-decoration:none;color:inherit;background:var(--card);
+  border:1px solid var(--rule);border-radius:var(--r);padding:16px 17px 17px;
+  transition:border-color .14s,box-shadow .14s;position:relative;
+}
+a.app:hover{border-color:var(--focus);box-shadow:0 2px 10px -6px rgba(16,30,46,.45)}
+.top{display:flex;align-items:center;gap:9px;margin-bottom:5px}
+.name{font-size:15px;font-weight:600;font-family:'IBM Plex Sans',sans-serif;letter-spacing:-.01em}
+.ar{font-size:13.5px;color:var(--ink2);font-weight:500}
+.desc{font-size:13px;color:var(--mute);margin:6px 0 0;line-height:1.65}
+.tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:11px}
+.tag{font-size:11px;color:var(--faint);border:1px solid var(--rule);border-radius:20px;padding:1px 9px;
+  font-family:'IBM Plex Sans',sans-serif}
+
+.note{margin:34px 0 0;border:1px solid var(--rule);border-radius:var(--r);
+  background:var(--card);padding:15px 17px}
+.note h3{margin:0 0 5px;font-size:13.5px;font-weight:600}
+.note p{margin:0;font-size:13px;color:var(--mute);max-width:72ch}
+footer{max-width:1060px;margin:0 auto;padding:0 24px 40px;font-size:12px;color:var(--faint)}
+footer a{color:var(--mute)}
+</style>
+</head>
+<body>
+
+<header><div class="hin">
+  <svg class="mark" viewBox="0 0 40 40" aria-hidden="true">
+    <rect width="40" height="40" rx="9" fill="#FFFFFF"/>
+    <g fill="#17222E">
+      <rect x="7.5" y="9" width="2.8" height="22" rx="1.4"/>
+      <rect x="13" y="9" width="1.6" height="22" rx=".8"/>
+      <rect x="17.3" y="9" width="3.4" height="22" rx="1.7"/>
+      <rect x="23.4" y="9" width="1.6" height="22" rx=".8"/>
+      <rect x="27.8" y="9" width="2.8" height="22" rx="1.4"/>
+    </g>
+  </svg>
+  <h1>أدوات العمليات المالية</h1>
+  <p class="lede">كل أداة بتشتغل جوه متصفحك. الملفات اللي بترفعها مابتخرجش من الجهاز، وكل واحد بيشوف داتاه هو بس.</p>
+</div></header>
+
+<main>
+
+  <div class="secth"><h2>المطابقة والتسوية</h2><span>4 أدوات</span></div>
+  <p class="sechint">المقارنة بين اللي البنك سوّاه واللي السيستم شايفه لسه مفتوح.</p>
+  <div class="apps">
+
+    <a class="app" href="../rrn-check/">
+      <div class="top"><span class="name">RRN Check</span><span class="ar">مطابقة الـ RRN</span></div>
+      <p class="desc">بتاخد ملف الفلاجز وتقولك إيه اللي البنك لسه عليه فلوس فيه وإيه اللي اتسوّى فعلاً. بتطابق على الـ RRN الأول، وهو المرجع الوحيد اللي مابيتكررش.</p>
+      <div class="tags"><span class="tag">POS</span><span class="tag">E-Commerce</span><span class="tag">Banque Misr</span></div>
+    </a>
+
+    <a class="app" href="../recondesk/">
+      <div class="top"><span class="name">ReconDesk</span><span class="ar">مطابقة كشوف البنك</span></div>
+      <p class="desc">مطابقة التسويات بين كشف البنك وكشف التاجر على مستوى الحساب، وإظهار الفروقات.</p>
+      <div class="tags"><span class="tag">Bank vs Merchant</span><span class="tag">POS 120</span></div>
+    </a>
+
+    <a class="app" href="../wallet-reconciliation/">
+      <div class="top"><span class="name">Wallet Reconciliation</span><span class="ar">مطابقة المحافظ</span></div>
+      <p class="desc">مطابقة حركات محافظ أورنج وإتصالات مع اللي عندنا.</p>
+      <div class="tags"><span class="tag">Orange</span><span class="tag">Etisalat</span></div>
+    </a>
+
+    <a class="app" href="../midlink/">
+      <div class="top"><span class="name">MIDLink</span><span class="ar">ربط الميدات</span></div>
+      <p class="desc">بتملا الـ Merchant ID واسم التاجر ورقم المعاملة في شيت شركة التقسيط أو كشف البنك، بمطابقة كل خلية على مفاتيح تصدير البورتال.</p>
+      <div class="tags"><span class="tag">valU</span><span class="tag">Souhoola</span><span class="tag">XLOOKUP بديل</span></div>
+    </a>
+
+  </div>
+
+  <div class="secth" style="margin-top:36px"><h2>التسويات والمدفوعات</h2><span>3 أدوات</span></div>
+  <p class="sechint">تجهيز وتتبّع الفلوس الخارجة.</p>
+  <div class="apps">
+
+    <a class="app" href="../morning-settlement/">
+      <div class="top"><span class="name">Morning Settlement</span><span class="ar">تسوية الصبح</span></div>
+      <p class="desc">تجهيز دفعات التحويل اليومية على حسابات الأهلي وبنك مصر، وفصل اللي محتاج موافقة.</p>
+      <div class="tags"><span class="tag">NBE</span><span class="tag">Banque Misr</span><span class="tag">Daily batch</span></div>
+    </a>
+
+    <a class="app" href="../event-settlement/">
+      <div class="top"><span class="name">Event Settlement</span><span class="ar">تسوية الإيفنتات</span></div>
+      <p class="desc">حساب مستحقات كل فيندور في الإيفنت على مستوى الـ TID، وتجهيز ملف الدفع.</p>
+      <div class="tags"><span class="tag">Per-TID</span><span class="tag">Vendor payouts</span></div>
+    </a>
+
+    <a class="app" href="../ipn-splitter/">
+      <div class="top"><span class="name">IPN Splitter</span><span class="ar">تقسيم الـ IPN</span></div>
+      <p class="desc">تقسيم ملفات الـ IPN وتجهيزها بالشكل اللي السيستم بيقبله.</p>
+      <div class="tags"><span class="tag">IPN</span><span class="tag">AxisPay</span></div>
+    </a>
+
+  </div>
+
+  <div class="note">
+    <h3>الداتا بتفضل عندك</h3>
+    <p>مفيش سيرفر ورا الأدوات دي. كل ملف بيتقري جوه متصفحك وبيتخزن في نفس المتصفح، فلو فتحت نفس الأداة من جهاز تاني هتلاقيها فاضية. الكود مفتوح على GitHub، الداتا لأ — محدش غيرك بيشوفها.</p>
+  </div>
+
+</main>
+
+<footer>Kashier · Financial Operations — <a href="https://github.com/TechnicalTeam774/technicalteam774.github.io">الكود على GitHub</a></footer>
+
+</body>
+</html>
